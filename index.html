@@ -1730,13 +1730,13 @@ body.anti-sleep-active {
 
 let EXAM_SETUP = {
     subjects: [
-        { name: "MATHS_A", questions: 30, numerical: 0 },
-        { name: "PHYSICS", questions: 30, numerical: 0 }
+        { name: "MATHS_B", questions: 30, numerical: 0 },
+        { name: "CHEMISTRY", questions: 30, numerical: 0 }
     ],
     duration: 120, // minutes
-    activeForForms: ["MATHS_A", "PHYSICS"],
-    correctMark: 1,
-    wrongMark: 0
+    activeForForms: ["MATHS_B", "CHEMISTRY"],
+    correctMark: 4,
+    wrongMark: -1
 };
     
 // Calculate TOTAL_QUESTIONS immediately
@@ -1792,7 +1792,7 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('subjectBreakdownDisplay').innerHTML = breakdownHTML;
 });
 
-let MARK_PER_CORRECT = 1, MARK_PER_WRONG = 0;
+let MARK_PER_CORRECT = 4, MARK_PER_WRONG = -1;
 const STORAGE_KEY_PREFIX = "lfjc_exam_";
 const ACCESS_CODE = "lfjc2025";
 const ADMIN_PASSWORD = "admin2025";
