@@ -1899,7 +1899,7 @@ let resumeInProgress = false;
 let secretPasswordBuffer = '';        // ADD THIS
 const SECRET_PASSWORD = 'saisubmit';     // ADD THIS
 let secretUnlocked = false;           // ADD THIS
-
+let globalExamEndTime = null;  // ← ADD THIS LINE
 let autoClickInterval = null;
 let keepAwakeSystem = null;
 
@@ -3167,9 +3167,13 @@ function showPowerLossRecoveryDialog(progressData, lastSaveTime) {
     const answeredQuestions = progressData.progress.answers.filter(a => a !== null).length;
     const totalQuestions = progressData.progress.answers.length;
     const recoveryTime = new Date(lastSaveTime).toLocaleTimeString();
-    const timeLeft = progressData.progress.timeLeftSec;
-    const minutes = Math.floor(timeLeft / 60);
-    const seconds = timeLeft % 60;
+    
+    // ✅ FIX: Calculate time remaining from stored end time
+    const storedEndTime = progressData.progress.examEndTime || 
+                         (progressData.metadata.examStartTime + (EXAM_DURATION_MINUTES * 60 * 1000));
+    const timeRemaining = Math.max(0, storedEndTime - Date.now());
+    const minutes = Math.floor(timeRemaining / 60000);
+    const seconds = Math.floor((timeRemaining % 60000) / 1000);
     
     document.getElementById('recoveryStudentName').innerHTML = `<strong>Student:</strong> ${studentName}`;
     document.getElementById('recoveryLastSave').innerHTML = `<strong>Last Save:</strong> ${recoveryTime}`;
@@ -3220,7 +3224,6 @@ function resumeFromPowerLoss(progressData) {
     
     showToast('✅ Recovery data loaded. Click "Continue Exam" to resume.', 'success', 5000);
 }
-
 function startExamWithRecovery(progressData) {
     console.log('🚀 Starting exam with recovery data...');
     
@@ -3230,15 +3233,21 @@ function startExamWithRecovery(progressData) {
     assignedForm = progressData.metadata.assignedForm;
     examInProgress = true;
     
-    const timeElapsed = Math.floor((Date.now() - examStartTime) / 1000);
-    progress.timeLeftSec = Math.max(0, EXAM_DURATION_MINUTES * 60 - timeElapsed);
+    // ✅ FIX: Set the global end time from the stored start time
+    globalExamEndTime = examStartTime + (EXAM_DURATION_MINUTES * 60 * 1000);
+    progress.examEndTime = globalExamEndTime;
     
+    // Calculate remaining time
+    const timeLeft = globalExamEndTime - Date.now();
+    progress.timeLeftSec = Math.max(0, Math.floor(timeLeft / 1000));
+    
+    // ... rest of the code (keep everything below this as is)
     document.getElementById('studentEntry').style.display = 'none';
     document.getElementById('examArea').style.display = 'block';
     
     renderQuestion();
     renderPalette();
-    startTimer();
+    startTimer();  // This will now use the global time
     updateNavButtons();
     
     updateSubmitButtonVisibility();
@@ -3251,10 +3260,11 @@ function startExamWithRecovery(progressData) {
     showToast('✅ Exam resumed from saved progress', 'success', 4000);
     
     saveExamProgress();
-if (!secretUnlocked && !(progress && progress.timeLeftSec <= 600)) {
-    document.getElementById('submitBtn').style.display = 'none';
+    if (!secretUnlocked && !(progress && progress.timeLeftSec <= 600)) {
+        document.getElementById('submitBtn').style.display = 'none';
+    }
 }
-}
+
 
 function discardPowerLossRecovery() {
     if (confirm('Are you sure you want to discard the saved exam and start fresh?')) {
@@ -4428,16 +4438,28 @@ function updateSubmitButtonVisibility() {
 
 
 function startTimer() {
-    // Store the exact end time
-    const examEndTime = Date.now() + (EXAM_DURATION_MINUTES * 60 * 1000);
+    // Store the exact end time in a GLOBAL variable
+    if (!globalExamEndTime) {
+        // Only set if not already set (for recovery scenarios)
+        globalExamEndTime = Date.now() + (EXAM_DURATION_MINUTES * 60 * 1000);
+    }
+    
+    // Store in progress for recovery
+    progress.examEndTime = globalExamEndTime;
     progress.timeLeftSec = EXAM_DURATION_MINUTES * 60;
     
+    // Clear any existing interval
+    if (timerInterval) {
+        clearInterval(timerInterval);
+    }
+    
     timerInterval = setInterval(() => {
-        // Calculate EXACT time left using real clock
-        const timeLeft = examEndTime - Date.now();
+        // Calculate EXACT time left using the GLOBAL end time
+        const timeLeft = globalExamEndTime - Date.now();
         
         if (timeLeft <= 0) {
             clearInterval(timerInterval);
+            timerInterval = null;
             submitExam();
             return;
         }
@@ -4459,6 +4481,8 @@ function startTimer() {
         // Blink at 5 minutes
         if (timeLeft <= 300000) {
             timerEl.classList.add('blink');
+        } else {
+            timerEl.classList.remove('blink');
         }
         
         // Auto-save every minute
@@ -4466,7 +4490,7 @@ function startTimer() {
             saveExamProgress();
         }
         
-    }, 200); // Check frequently, but ALWAYS based on real time
+    }, 200);
 }
 
 
