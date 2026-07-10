@@ -1476,10 +1476,10 @@ body.anti-sleep-active {
 
 #paletteContainer {
     display: grid !important;
-    grid-template-columns: repeat(5, 1fr) !important;
+    grid-template-columns: repeat(10, 1fr) !important;
     gap: 6px !important;
     margin: 0 !important;
-    padding: 0 !important;
+    padding: 10px !important;
     max-width: 100% !important;
 }
 
@@ -1561,6 +1561,46 @@ body.anti-sleep-active {
     #paletteContainer {
         grid-template-columns: repeat(8, 1fr) !important;
     }
+}
+.palette-stats {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background: white;
+    border-radius: 10px;
+    margin-bottom: 12px;
+    gap: 6px;
+    font-size: 12px;
+    border: 1px solid #e6e6fa;
+}
+
+.palette-stat-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-weight: 500;
+}
+
+.palette-stat-item .stat-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+    flex-shrink: 0;
+}
+
+.stat-dot.attempted { background: #32CD32; }
+.stat-dot.reviewed { background: #FFD700; }
+.stat-dot.not-attempted { background: #e0e0e0; border: 1px solid #ccc; }
+
+.palette-stat-item .stat-count {
+    font-weight: 700;
+    color: #4B0082;
+}
+
+.palette-stat-item .stat-label {
+    color: #666;
+    font-size: 11px;
 }  
 </style>
 </head>
@@ -4049,6 +4089,7 @@ function handleNumericalInput(inputElement, questionIndex) {
     
     progress.answers[questionIndex] = inputElement.value;
     updatePalette();
+  
     if (examInProgress) {
         setTimeout(() => saveExamProgress(), 500);
     }
@@ -4812,6 +4853,29 @@ function updatePalette() {
   
   updatePaletteStats();
 }
+function updatePaletteStats() {
+    if (!progress) return;
+    
+    let attempted = 0;
+    let reviewed = 0;
+    let notAttempted = 0;
+    const total = progress.answers.length;
+    
+    for (let i = 0; i < total; i++) {
+        if (progress.answers[i] !== null) {
+            attempted++;
+        } else {
+            notAttempted++;
+        }
+        if (progress.review[i]) {
+            reviewed++;
+        }
+    }
+    
+    document.getElementById('attemptedCount').textContent = attempted;
+    document.getElementById('reviewedCount').textContent = reviewed;
+    document.getElementById('notAttemptedCount').textContent = notAttempted;
+}  
 
 
 function updateNavButtons() {
