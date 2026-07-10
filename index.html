@@ -1894,30 +1894,46 @@ console.log('🔒 AUTO FULL SCREEN ACTIVE - Will force full screen without click
             </div>
         </div>
 
-        <div class="exam-sidebar">
-            <div class="sidebar-title">📋 Questions</div>
-            <div id="paletteContainer"></div>
-            <div class="palette-legend">
-                <div class="palette-legend-item">
-                    <span class="color-box" style="background:#32CD32;"></span> Attempted
-                </div>
-                <div class="palette-legend-item">
-                    <span class="color-box" style="background:white;border-color:#4B0082;"></span> Not Attempted
-                </div>
-                <div class="palette-legend-item">
-                    <span class="color-box" style="background:#FFD700;"></span> Marked for Review
-                </div>
-                <div class="palette-legend-item">
-                    <span class="color-box current" style="border:2px solid red;"></span> Current
-                </div>
-            </div>
+       <div class="exam-sidebar">
+    <div class="sidebar-title">📋 Questions</div>
+    
+    <div class="palette-stats">
+        <div class="palette-stat-item">
+            <span class="stat-dot attempted"></span>
+            <span class="stat-count" id="attemptedCount">0</span>
+            <span class="stat-label">Done</span>
+        </div>
+        <div class="palette-stat-item">
+            <span class="stat-dot reviewed"></span>
+            <span class="stat-count" id="reviewedCount">0</span>
+            <span class="stat-label">Review</span>
+        </div>
+        <div class="palette-stat-item">
+            <span class="stat-dot not-attempted"></span>
+            <span class="stat-count" id="notAttemptedCount">0</span>
+            <span class="stat-label">Left</span>
+        </div>
+    </div>
+    
+    <div id="paletteContainer"></div>
+    
+    <div class="palette-legend">
+        <div class="palette-legend-item">
+            <span class="color-box" style="background:#32CD32;"></span> Attempted
+        </div>
+        <div class="palette-legend-item">
+            <span class="color-box" style="background:white;border-color:#4B0082;"></span> Not Attempted
+        </div>
+        <div class="palette-legend-item">
+            <span class="color-box" style="background:#FFD700;"></span> Review
+        </div>
+        <div class="palette-legend-item">
+            <span class="color-box current-box"></span> Current
         </div>
     </div>
 </div>
-
-  <div id="paletteContainer"></div>
+    </div>
 </div>
-
 
 <div id="summaryArea">
   <div class="area-header">
@@ -4741,8 +4757,6 @@ function updateQuestionInfo() {
   if (stuInfoEl) stuInfoEl.textContent = `${progress.student.name} | ${progress.student.sec} | Roll: ${progress.student.roll}`;
   if (stuQInfoEl) stuQInfoEl.textContent = `Question ${idx+1} of ${TOTAL_QUESTIONS} | ${examData.subjectNames[idx]}`;
 }
-
-
 function renderPalette() {
   const container = document.getElementById('paletteContainer');
   container.innerHTML = '';
@@ -4772,7 +4786,12 @@ function renderPalette() {
     
     container.appendChild(btn);
   }
+  
+  updatePaletteStats();
 }
+
+
+
 function updatePalette() {
   const buttons = document.querySelectorAll('.palette-btn');
   buttons.forEach((btn, i) => {
@@ -4790,6 +4809,8 @@ function updatePalette() {
     if (progress.review[i]) btn.classList.add('reviewed');
     if (i === progress.currentIndex) btn.classList.add('current');
   });
+  
+  updatePaletteStats();
 }
 
 
