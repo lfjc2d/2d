@@ -4124,6 +4124,19 @@ function prepareExamData() {
   examData.originalOrder = []; 
   examData.questionTypes = [];
   
+  // Verify we have exactly TOTAL_QUESTIONS
+  console.log(`🔍 Preparing exam data for ${TOTAL_QUESTIONS} questions...`);
+  console.log(`📊 Images available: ${images.length}`);
+  console.log(`📊 Answer keys available: ${answerKey.length}`);
+  
+  // Check if images and answer keys match expected total
+  if (images.length !== TOTAL_QUESTIONS) {
+    console.error(`❌ Images count mismatch: Expected ${TOTAL_QUESTIONS}, got ${images.length}`);
+  }
+  if (answerKey.length !== TOTAL_QUESTIONS) {
+    console.error(`❌ Answer keys count mismatch: Expected ${TOTAL_QUESTIONS}, got ${answerKey.length}`);
+  }
+  
   let groups = [];
   
   EXAM_SETUP.subjects.forEach(subject => {
@@ -4132,9 +4145,11 @@ function prepareExamData() {
     const subjectOriginalOrder = [];
     const subjectTypes = [];
     
+    let countAdded = 0;
     for (let i = subject.start; i <= subject.end; i++) {
       const imgIndex = i - 1;
-      if (images[imgIndex] && answerKey[imgIndex]) {
+      // Make sure we only add valid questions within bounds
+      if (imgIndex < images.length && imgIndex < answerKey.length) {
         subjectQuestions.push(images[imgIndex]);
         subjectKeys.push(answerKey[imgIndex]);
         subjectOriginalOrder.push(imgIndex);
@@ -4144,19 +4159,54 @@ function prepareExamData() {
           questionType = 'fill-blank';
         }
         subjectTypes.push(questionType);
+        countAdded++;
+      } else {
+        console.warn(`⚠️ Skipping Q${i} (index ${imgIndex}) - out of bounds`);
       }
     }
     
-    const shuffledIndices = shuffleArray([...Array(subjectQuestions.length).keys()]);
+    console.log(`📚 ${subject.name}: Added ${countAdded} questions (expected ${subject.questions})`);
+    
+    // Only add if we have questions
+    if (subjectQuestions.length > 0) {
+      const shuffledIndices = shuffleArray([...Array(subjectQuestions.length).keys()]);
+      
+      groups.push({
+        name: subject.name,
+        imgs: shuffledIndices.map(i => subjectQuestions[i]),
+        keys: shuffledIndices.map(i => subjectKeys[i]),
+        originalOrder: shuffledIndices.map(i => subjectOriginalOrder[i]),
+        types: shuffledIndices.map(i => subjectTypes[i])
+      });
+    }
+  });
+  
+  // If groups is empty or not matching expected, fix it
+  if (groups.length === 0) {
+    console.error('❌ No groups created! Creating fallback...');
+    // Fallback: create a single group with all questions
+    const fallbackQuestions = [];
+    const fallbackKeys = [];
+    const fallbackOrder = [];
+    const fallbackTypes = [];
+    
+    const maxQ = Math.min(images.length, answerKey.length, TOTAL_QUESTIONS);
+    for (let i = 0; i < maxQ; i++) {
+      fallbackQuestions.push(images[i]);
+      fallbackKeys.push(answerKey[i]);
+      fallbackOrder.push(i);
+      fallbackTypes.push('mcq');
+    }
     
     groups.push({
-      name: subject.name,
-      imgs: shuffledIndices.map(i => subjectQuestions[i]),
-      keys: shuffledIndices.map(i => subjectKeys[i]),
-      originalOrder: shuffledIndices.map(i => subjectOriginalOrder[i]),
-      types: shuffledIndices.map(i => subjectTypes[i])
+      name: 'ALL_QUESTIONS',
+      imgs: fallbackQuestions,
+      keys: fallbackKeys,
+      originalOrder: fallbackOrder,
+      types: fallbackTypes
     });
-  });
+    console.log(`📚 Fallback: Added ${fallbackQuestions.length} questions`);
+  }
   
   const shuffledGroups = shuffleArray(groups);
   
@@ -4172,11 +4222,23 @@ function prepareExamData() {
   
   console.log("🎯 EXAM DATA VERIFICATION:");
   console.log("Total Questions:", examData.files.length);
+  console.log("Expected:", TOTAL_QUESTIONS);
+  
+  // If mismatch, truncate to TOTAL_QUESTIONS
+  if (examData.files.length !== TOTAL_QUESTIONS) {
+    console.warn(`⚠️ Mismatch detected! Truncating to ${TOTAL_QUESTIONS} questions...`);
+    examData.files = examData.files.slice(0, TOTAL_QUESTIONS);
+    examData.keys = examData.keys.slice(0, TOTAL_QUESTIONS);
+    examData.subjectNames = examData.subjectNames.slice(0, TOTAL_QUESTIONS);
+    examData.originalOrder = examData.originalOrder.slice(0, TOTAL_QUESTIONS);
+    examData.questionTypes = examData.questionTypes.slice(0, TOTAL_QUESTIONS);
+    console.log(`✅ Truncated to ${examData.files.length} questions`);
+  }
+  
   EXAM_SETUP.subjects.forEach(subject => {
     console.log(`- ${subject.name}:`, examData.subjectNames.filter(s => s === subject.name).length);
   });
 }
-
 
 function renderQuestion() {
   const idx = progress.currentIndex;
