@@ -475,22 +475,69 @@ button:focus {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0,0,0,0.45);
+  background: rgba(0, 0, 0, 0.7);
   display: none;
-  align-items: center;
+  z-index: 999999;
   justify-content: center;
-  z-index: 10001;
+  align-items: center;
+}
+
+.confirmModal.active {
+  display: flex;
 }
 
 .confirmBox {
-  background: var(--white);
-  padding: 20px;
-  border-radius: 12px;
-  min-width: 280px;
+  background: white;
+  padding: 30px 40px;
+  border-radius: 16px;
+  min-width: 320px;
+  max-width: 90%;
   text-align: center;
-  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  animation: modalPopIn 0.3s ease;
+  border: 2px solid #4B0082;
 }
 
+@keyframes modalPopIn {
+  0% { transform: scale(0.8); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.confirmBox p {
+  font-size: 20px;
+  color: #4B0082;
+  margin-bottom: 25px;
+  font-weight: 600;
+}
+
+.confirmBox button {
+  margin: 0 10px;
+  padding: 12px 30px;
+  font-size: 18px;
+  cursor: pointer;
+  border-radius: 8px;
+  border: none;
+  font-weight: bold;
+  min-width: 100px;
+}
+
+#confirmYes {
+  background: #32CD32;
+  color: white;
+}
+
+#confirmYes:hover {
+  background: #228B22;
+}
+
+#confirmNo {
+  background: #dc3545;
+  color: white;
+}
+
+#confirmNo:hover {
+  background: #c82333;
+}
 .confirmBox p {
   font-size: 18px;
   color: var(--primary-color);
