@@ -2258,6 +2258,7 @@ const GOOGLE_FORMS = {
 
 let images = [];
 let hasSubmitted = false;
+let isSummaryShowing = false;
 let examStartTime = null;
 let waitingTimerInterval = null;
 let autoTransitionTimer = null;
@@ -5089,6 +5090,9 @@ function startWithSecurity(ok) {
   });
 }
 function startExam(studentKey) {
+    // Reset summary flag when starting new exam
+    isSummaryShowing = false;
+    
     if (!keyLoaded) {
         alert('Answer key not loaded. Contact admin.');
         return;
@@ -5814,6 +5818,13 @@ function identifySubject(subjectName) {
 }
 
 function showSummaryInterface(subjData) {
+  // ✅ Prevent double execution
+  if (isSummaryShowing) {
+    console.log('⚠️ Summary already showing - skipping duplicate call');
+    return;
+  }
+  isSummaryShowing = true;
+  
   // Force full screen multiple times for results - STRONGER
   goFullScreen();
   setTimeout(goFullScreen, 100);
