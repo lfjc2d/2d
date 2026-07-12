@@ -3046,6 +3046,12 @@ function showGreenSubmitScreen(fullUrl, answersData) {
     const existing = document.getElementById('greenSubmitOverlay');
     if (existing) existing.remove();
     
+    // ✅ REMOVE THE PURPLE TRANSITION OVERLAY
+    const purpleOverlay = document.getElementById('transitionOverlay');
+    if (purpleOverlay && purpleOverlay.parentNode) {
+        purpleOverlay.parentNode.removeChild(purpleOverlay);
+    }
+    
     // Create full screen overlay - IMMEDIATELY FULL GREEN WITH SUBMIT BUTTON
     const overlay = document.createElement('div');
     overlay.id = 'greenSubmitOverlay';
@@ -5750,7 +5756,7 @@ function submitExam() {
     return;
   }
   
-  // ✅ CREATE FULL SCREEN PURPLE TRANSITION OVERLAY
+  // ✅ CREATE FULL SCREEN PURPLE TRANSITION OVERLAY (STAYS UNTIL GREEN SCREEN IS READY!)
   const transitionOverlay = document.createElement('div');
   transitionOverlay.id = 'transitionOverlay';
   transitionOverlay.style.cssText = `
@@ -5802,7 +5808,7 @@ function submitExam() {
   
   document.body.appendChild(transitionOverlay);
   
-  // ✅ NOW HIDE THE EXAM AREA
+  // ✅ HIDE THE EXAM AREA
   document.getElementById('examArea').style.display = 'none';
   
   // Force full screen multiple times for results - STRONGER
@@ -5880,13 +5886,9 @@ function submitExam() {
 
   const answersData = captureAllAnswersData();
   
-  // Remove transition overlay after 1 second (shows green screen)
-  setTimeout(() => {
-    const overlay = document.getElementById('transitionOverlay');
-    if (overlay && overlay.parentNode) {
-      overlay.parentNode.removeChild(overlay);
-    }
-  }, 1000);
+  // ✅ PURPLE OVERLAY STAYS UNTIL GREEN SCREEN IS SHOWN
+  // The green screen (showGreenSubmitScreen) will remove this overlay when ready
+  // We'll store a reference to remove it when green screen appears
   
   submitToGoogleFormsWithRetry(answersData).then(result => {
     if (result.success) {
