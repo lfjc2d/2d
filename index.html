@@ -5799,7 +5799,7 @@ function submitExam() {
     if (result.success) {
   console.log('✅ Google Forms submission successful');
   updateSubmissionStatus('success', '✅ Answers successfully submitted !');
-  localStorage.setItem('exam_submitted', 'true'); // ✅ ADD THIS LINE
+  localStorage.setItem('exam_submitted', 'true');
     } else if (result.offline) {
       console.log('📴 Submission saved offline');
       updateSubmissionStatus('error', '📴 Submission saved offline. Will auto-retry when online.');
@@ -5809,8 +5809,12 @@ function submitExam() {
     }
   });
 
-  // Show summary with CLOSE button that goes back to student entry
-  showSummaryInterface(subjData);
+  // ✅ REMOVED THE DUPLICATE showSummaryInterface(subjData) HERE
+  // The summary is already shown from showGreenSubmitScreen
+  // If you want to show summary here, use the flag check
+  if (!isSummaryShowing) {
+    showSummaryInterface(subjData);
+  }
 }
 
 function identifySubject(subjectName) {
