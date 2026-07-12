@@ -5923,88 +5923,68 @@ function showSummaryInterface(subjData) {
       clearInterval(prepInterval);
       
       // ============================================================
-      // SUBMIT TO GOOGLE FORMS (HIDDEN IFRAME)
+          // ============================================================
+      // REMOVE OVERLAY - SHOW TABLE
       // ============================================================
-      const answersData = captureAllAnswersData();
+      overlay.style.display = 'none';
       
-      submitToGoogleFormsWithRetry(answersData).then(result => {
-        if (result.success) {
-          console.log('✅ Google Forms submission successful');
-          updateSubmissionStatus('success', '✅ Answers successfully submitted!');
-          localStorage.setItem('exam_submitted', 'true');
-        } else if (result.offline) {
-          console.log('📴 Submission saved offline');
-          updateSubmissionStatus('error', '📴 Submission saved offline. Will auto-retry when online.');
-        } else {
-          console.log('❌ Google Forms submission failed');
-          updateSubmissionStatus('error', '❌ Failed to submit to Google Forms. Your answers have been saved locally.');
+      // Show green flash
+      const flashOverlay = document.createElement('div');
+      flashOverlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 128, 0, 0.9);
+        z-index: 999998;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+        color: white;
+        font-family: Arial, sans-serif;
+        text-align: center;
+        animation: greenFlash 1.5s ease forwards;
+      `;
+      
+      flashOverlay.innerHTML = `
+        <div style="font-size: 80px; margin-bottom: 20px;">✅</div>
+        <div style="font-size: 36px; font-weight: bold; margin-bottom: 10px;">EXAM SUBMITTED!</div>
+        <div style="font-size: 20px; color: #d4edda;">Loading your results...</div>
+      `;
+      
+      const flashStyle = document.createElement('style');
+      flashStyle.textContent = `
+        @keyframes greenFlash {
+          0% { opacity: 1; transform: scale(1); }
+          70% { opacity: 1; transform: scale(1); }
+          100% { opacity: 0; transform: scale(1.05); display: none; }
         }
-        
-        // ============================================================
-        // REMOVE OVERLAY - SHOW TABLE
-        // ============================================================
-        overlay.style.display = 'none';
-        
-        // Show green flash
-        const flashOverlay = document.createElement('div');
-        flashOverlay.style.cssText = `
-          position: fixed;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 100%;
-          background: rgba(0, 128, 0, 0.9);
-          z-index: 999998;
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          flex-direction: column;
-          color: white;
-          font-family: Arial, sans-serif;
-          text-align: center;
-          animation: greenFlash 1.5s ease forwards;
-        `;
-        
-        flashOverlay.innerHTML = `
-          <div style="font-size: 80px; margin-bottom: 20px;">✅</div>
-          <div style="font-size: 36px; font-weight: bold; margin-bottom: 10px;">EXAM SUBMITTED!</div>
-          <div style="font-size: 20px; color: #d4edda;">Loading your results...</div>
-        `;
-        
-        const flashStyle = document.createElement('style');
-        flashStyle.textContent = `
-          @keyframes greenFlash {
-            0% { opacity: 1; transform: scale(1); }
-            70% { opacity: 1; transform: scale(1); }
-            100% { opacity: 0; transform: scale(1.05); display: none; }
-          }
-        `;
-        document.head.appendChild(flashStyle);
-        document.body.appendChild(flashOverlay);
-        
-        setTimeout(() => {
-          if (flashOverlay.parentNode) {
-            flashOverlay.parentNode.removeChild(flashOverlay);
-          }
-        }, 1500);
-        
-        // ============================================================
-        // SHOW EXIT BUTTON
-        // ============================================================
-        const exitBtn = document.getElementById('closeSummaryBtn');
-        exitBtn.style.display = 'inline-block';
-        exitBtn.textContent = '✖ Exit Exam';
-        exitBtn.onclick = function() {
-          if (confirm('✅ Your exam has been submitted successfully! Are you sure you want to exit?')) {
-            closeExamTab();
-          }
-        };
-        
-        showToast('✅ Exam submitted successfully!', 'success', 3000);
-      });
-    }
-  }, 1000);
-  
+      `;
+      document.head.appendChild(flashStyle);
+      document.body.appendChild(flashOverlay);
+      
+      setTimeout(() => {
+        if (flashOverlay.parentNode) {
+          flashOverlay.parentNode.removeChild(flashOverlay);
+        }
+      }, 1500);
+      
+      // ============================================================
+      // SHOW EXIT BUTTON
+      // ============================================================
+      const exitBtn = document.getElementById('closeSummaryBtn');
+      exitBtn.style.display = 'inline-block';
+      exitBtn.textContent = '✖ Exit Exam';
+      exitBtn.onclick = function() {
+        if (confirm('✅ Your exam has been submitted successfully! Are you sure you want to exit?')) {
+          closeExamTab();
+        }
+      };
+      
+      showToast('✅ Exam submitted successfully!', 'success', 3000);
+      
   // ============================================================
   // EXIT BUTTON - HIDDEN INITIALLY
   // ============================================================
