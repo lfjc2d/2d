@@ -5396,14 +5396,23 @@ async function processSubmissionQueue() {
     if (submissionQueue.length === 0) return;
     
     isSubmitting = true;
+    let processed = 0;
+    const total = submissionQueue.length;
     
     while (submissionQueue.length > 0) {
         const queueItem = submissionQueue.shift();
         const { data: answersData, resolve, reject } = queueItem;
         
         try {
-            // Calculate delay based on queue position (2-5 seconds between students)
-            const delay = 2000 + (Math.random() * 3000);
+            processed++;
+            
+            // Show progress every 5 students
+            if (processed % 5 === 0 || processed === total) {
+                showSubmissionProgress(processed, total);
+            }
+            
+            // Calculate delay (5-10 seconds between students)
+            const delay = 5000 + (Math.random() * 5000);
             
             console.log(`⏳ Waiting ${(delay/1000).toFixed(1)}s before submitting ${answersData.student.name}`);
             await sleep(delay);
@@ -5430,6 +5439,16 @@ async function processSubmissionQueue() {
     
     isSubmitting = false;
     console.log('✅ All submissions processed!');
+    
+    // Show final completion
+    const statusDiv = document.getElementById('summarySubmissionStatus');
+    if (statusDiv) {
+        statusDiv.innerHTML = `
+            <div class="submission-status submission-success">
+                ✅ <strong>All ${total} submissions processed!</strong>
+            </div>
+        `;
+    }
 }
 
 // ===== SUBMIT WITH GREEN SCREEN (NO UNLINK! STUDENT CLICKS SUBMIT) =====
@@ -5545,8 +5564,21 @@ function updateSubmissionStatus(status, message) {
         entryStatus.style.display = 'block';
     }
 }
-
-async function submitToGoogleFormsWithRetry(answersData, maxRetries = 3) {
+function showSubmissionProgress(processed, total) {
+    const percent = Math.round((processed / total) * 100);
+    const statusDiv = document.getElementById('summarySubmissionStatus');
+    if (statusDiv) {
+        statusDiv.innerHTML = `
+            <div class="submission-status submission-pending">
+                <strong>📤 ${processed}/${total}</strong>
+                <div style="width:100%; height:8px; background:#e0e0e0; border-radius:4px; margin:8px 0;">
+                    <div style="width:${percent}%; height:100%; background:#4B0082; border-radius:4px;"></div>
+                </div>
+            </div>
+        `;
+    }
+}
+async function submitToGoogleFormsWithRetry(answersData, maxRetries = 10) {
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
         try {
             console.log(`📤 Submission attempt ${attempt}/${maxRetries} for ${answersData.student.name}`);
@@ -5564,10 +5596,10 @@ async function submitToGoogleFormsWithRetry(answersData, maxRetries = 3) {
             }
             
             if (attempt < maxRetries) {
-                const delay = 3000 * attempt;
-                console.log(`⏳ Retrying in ${delay/1000} seconds...`);
-                await sleep(delay);
-            }
+            const backoff = 5000 * Math.pow(2, attempt - 1);
+            console.log(`⏳ Backoff ${backoff/1000}s before retry ${attempt + 1}`);
+            await sleep(backoff);
+        }
             
         } catch (error) {
             console.error(`❌ Submission error (attempt ${attempt}):`, error);
