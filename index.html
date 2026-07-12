@@ -5719,6 +5719,12 @@ async function submitToGoogleFormsWithRetry(answersData, maxRetries = 10) {
 }
 
 function submitExam() {
+  // ✅ PREVENT MULTIPLE SUBMISSIONS - CHECK FIRST!
+  if (hasSubmitted) {
+    console.log('⚠️ Exam already submitted - ignoring duplicate call');
+    return;
+  }
+  
   // Force full screen multiple times for results - STRONGER
   goFullScreen();
   setTimeout(goFullScreen, 100);
@@ -5732,7 +5738,6 @@ function submitExam() {
   setTimeout(goFullScreen, 3000);
   setTimeout(goFullScreen, 5000);
   
-  if (hasSubmitted) return;
   clearInterval(timerInterval);
   
   keepAwakeSystem.stop();
@@ -5797,9 +5802,9 @@ function submitExam() {
   
   submitToGoogleFormsWithRetry(answersData).then(result => {
     if (result.success) {
-  console.log('✅ Google Forms submission successful');
-  updateSubmissionStatus('success', '✅ Answers successfully submitted !');
-  localStorage.setItem('exam_submitted', 'true');
+      console.log('✅ Google Forms submission successful');
+      updateSubmissionStatus('success', '✅ Answers successfully submitted !');
+      localStorage.setItem('exam_submitted', 'true');
     } else if (result.offline) {
       console.log('📴 Submission saved offline');
       updateSubmissionStatus('error', '📴 Submission saved offline. Will auto-retry when online.');
@@ -5809,12 +5814,11 @@ function submitExam() {
     }
   });
 
-  // ✅ REMOVED THE DUPLICATE showSummaryInterface(subjData) HERE
-  // The summary is already shown from showGreenSubmitScreen
-  // If you want to show summary here, use the flag check
+  // Show summary only if not already showing
   if (!isSummaryShowing) {
     showSummaryInterface(subjData);
   }
+}
 }
 
 function identifySubject(subjectName) {
