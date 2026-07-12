@@ -5361,6 +5361,60 @@ function showConfirm(message, callback) {
   };
 }
 
+function showExitConfirmModal() {
+    const modal = document.getElementById('confirmModal');
+    const text = document.getElementById('confirmText');
+    
+    // Safety check
+    if (!modal || !text) {
+        // Fallback to browser confirm
+        if (confirm('✅ Your exam has been submitted successfully! Are you sure you want to exit?')) {
+            closeExamTab();
+        }
+        return;
+    }
+    
+    // Get button references
+    let yesBtn = document.getElementById('confirmYes');
+    let noBtn = document.getElementById('confirmNo');
+    
+    // Remove old event listeners by cloning
+    const newYesBtn = yesBtn.cloneNode(true);
+    const newNoBtn = noBtn.cloneNode(true);
+    yesBtn.parentNode.replaceChild(newYesBtn, yesBtn);
+    noBtn.parentNode.replaceChild(newNoBtn, noBtn);
+    
+    // Get fresh references
+    yesBtn = document.getElementById('confirmYes');
+    noBtn = document.getElementById('confirmNo');
+    
+    // Set the message
+    text.textContent = '✅ Your exam has been submitted successfully! Are you sure you want to exit?';
+    
+    // Show the modal
+    modal.style.display = 'flex';
+    
+    // YES button - close exam
+    yesBtn.onclick = function() {
+        modal.style.display = 'none';
+        console.log('✅ User confirmed - closing exam');
+        closeExamTab();
+    };
+    
+    // NO button - cancel
+    noBtn.onclick = function() {
+        modal.style.display = 'none';
+        console.log('❌ User cancelled exit');
+    };
+    
+    // Click outside to close
+    modal.onclick = function(e) {
+        if (e.target === modal) {
+            modal.style.display = 'none';
+            console.log('❌ User closed modal (clicked outside)');
+        }
+    };
+}  
 function updateSubmitButtonVisibility() {
     const submitBtn = document.getElementById('submitBtn');
     if (!submitBtn || !progress) return;
@@ -6012,7 +6066,6 @@ function showSummaryInterface(subjData) {
       clearInterval(prepInterval);
       
       // ============================================================
-          // ============================================================
       // REMOVE OVERLAY - SHOW TABLE
       // ============================================================
       overlay.style.display = 'none';
@@ -6061,15 +6114,13 @@ function showSummaryInterface(subjData) {
       }, 1500);
       
       // ============================================================
-      // SHOW EXIT BUTTON
+      // SHOW EXIT BUTTON - NOW WITH CUSTOM MODAL
       // ============================================================
       const exitBtn = document.getElementById('closeSummaryBtn');
       exitBtn.style.display = 'inline-block';
       exitBtn.textContent = '✖ Exit Exam';
       exitBtn.onclick = function() {
-        if (confirm('✅ Your exam has been submitted successfully! Are you sure you want to exit?')) {
-          closeExamTab();
-        }
+        showExitConfirmModal();  // Uses custom modal instead of browser confirm
       };
       
       showToast('✅ Exam submitted successfully!', 'success', 3000);
