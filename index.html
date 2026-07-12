@@ -1938,13 +1938,50 @@ console.log('🔒 AUTO FULL SCREEN ACTIVE - Will force full screen without click
     </div>
   </div>
   
-  <div id="summaryTableContainer" style="overflow-x:auto;display:flex;justify-content:center;width:100%;"></div>
-  
+  <!-- TABLE CONTAINER WITH OVERLAY -->
+  <div id="summaryTableWrapper" style="position:relative; width:100%; max-width:900px; margin:0 auto;">
+    
+    <!-- THE TABLE (hidden behind overlay initially) -->
+    <div id="summaryTableContainer" style="overflow-x:auto;display:flex;justify-content:center;width:100%;"></div>
+    
+    <!-- OVERLAY LAYER - Covers table until submission is complete -->
+    <div id="submissionOverlay" style="
+      position:absolute;
+      top:0;
+      left:0;
+      width:100%;
+      height:100%;
+      background: rgba(255,255,255,0.95);
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      border-radius:12px;
+      z-index:100;
+      min-height:400px;
+    ">
+      <div style="font-size:60px; margin-bottom:20px;">⏳</div>
+      <div style="font-size:28px; font-weight:bold; color:#4B0082; margin-bottom:10px;">PREPARING SUBMISSION...</div>
+      <div style="width:60px; height:60px; border:5px solid rgba(75,0,130,0.2); 
+                  border-top:5px solid #4B0082; border-radius:50%; 
+                  animation:spin 1s linear infinite; margin:20px auto;">
+      </div>
+      <div style="font-size:18px; color:#666;">
+        ⏳ Please wait... <span id="prepTimerTable">3</span> seconds
+      </div>
+      <div style="margin-top:15px; font-size:14px; color:#999;">
+        Your exam is being submitted to Google Forms.
+      </div>
+      <div style="margin-top:10px; font-size:12px; color:#ccc;">
+        Do not close this page.
+      </div>
+    </div>
+  </div>
   
   <div id="summarySubmissionStatus" style="margin: 20px auto; max-width: 600px;"></div>
   
   <div style="text-align:center; margin:30px 0;">
-    <div id="waitingMessage" class="waiting-message">
+    <div id="waitingMessage" class="waiting-message" style="display:none;">
       <div>⏳ Waiting for Exam Time to Complete</div>
       <div class="waiting-timer" id="waitingTimer">00:00</div>
       <div>Detailed solutions will be available automatically when the exam time is over.</div>
@@ -5799,8 +5836,12 @@ function showSummaryInterface(subjData) {
   document.getElementById('summaryRoll').textContent = progress.student.roll;
   document.getElementById('summaryAdm').textContent = progress.student.adm;
   
+  // ============================================================
+  // BUILD TABLE (hidden behind overlay)
+  // ============================================================
   const table = document.createElement('table');
   table.className = 'results-table';
+  table.id = 'resultsTable';
   table.innerHTML = `
     <thead>
       <tr>
@@ -5843,125 +5884,117 @@ function showSummaryInterface(subjData) {
   document.getElementById('summaryTableContainer').innerHTML = '';
   document.getElementById('summaryTableContainer').appendChild(table);
   
-   // Hide waiting message
+  // Hide waiting message
   document.getElementById('waitingMessage').style.display = 'none';
   document.getElementById('autoTransitionMessage').style.display = 'none';
   
   // ============================================================
-  // ✅ GREEN TRANSITION - FLASH GREEN THEN FADE TO RESULTS
+  // OVERLAY WITH SPINNER - Shows while submitting
   // ============================================================
+  const overlay = document.getElementById('submissionOverlay');
+  overlay.style.display = 'flex';
   
-  // Create green flash overlay
-  const flashOverlay = document.createElement('div');
-  flashOverlay.style.cssText = `
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 128, 0, 0.9);
-    z-index: 999998;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-direction: column;
-    color: white;
-    font-family: Arial, sans-serif;
-    text-align: center;
-    animation: greenFlash 1.5s ease forwards;
-  `;
+  // Countdown timer
+  let countdown = 3;
+  const timerElement = document.getElementById('prepTimerTable');
   
-  flashOverlay.innerHTML = `
-    <div style="font-size: 80px; margin-bottom: 20px;">✅</div>
-    <div style="font-size: 36px; font-weight: bold; margin-bottom: 10px;">EXAM SUBMITTED!</div>
-    <div style="font-size: 20px; color: #d4edda;">Loading your results...</div>
-  `;
-  
-  // Add green flash animation
-  const flashStyle = document.createElement('style');
-  flashStyle.textContent = `
-    @keyframes greenFlash {
-      0% { opacity: 1; transform: scale(1); }
-      70% { opacity: 1; transform: scale(1); }
-      100% { opacity: 0; transform: scale(1.05); display: none; }
+  const prepInterval = setInterval(() => {
+    countdown--;
+    if (timerElement) {
+      timerElement.textContent = countdown;
     }
-  `;
-  document.head.appendChild(flashStyle);
-  
-  document.body.appendChild(flashOverlay);
-  
-  // Remove flash overlay after animation
-  setTimeout(() => {
-    if (flashOverlay.parentNode) {
-      flashOverlay.parentNode.removeChild(flashOverlay);
+    
+    if (countdown <= 0) {
+      clearInterval(prepInterval);
+      
+      // ============================================================
+      // SUBMIT TO GOOGLE FORMS (HIDDEN IFRAME)
+      // ============================================================
+      const answersData = captureAllAnswersData();
+      
+      submitToGoogleFormsWithRetry(answersData).then(result => {
+        if (result.success) {
+          console.log('✅ Google Forms submission successful');
+          updateSubmissionStatus('success', '✅ Answers successfully submitted!');
+          localStorage.setItem('exam_submitted', 'true');
+        } else if (result.offline) {
+          console.log('📴 Submission saved offline');
+          updateSubmissionStatus('error', '📴 Submission saved offline. Will auto-retry when online.');
+        } else {
+          console.log('❌ Google Forms submission failed');
+          updateSubmissionStatus('error', '❌ Failed to submit to Google Forms. Your answers have been saved locally.');
+        }
+        
+        // ============================================================
+        // REMOVE OVERLAY - SHOW TABLE
+        // ============================================================
+        overlay.style.display = 'none';
+        
+        // Show green flash
+        const flashOverlay = document.createElement('div');
+        flashOverlay.style.cssText = `
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background: rgba(0, 128, 0, 0.9);
+          z-index: 999998;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          flex-direction: column;
+          color: white;
+          font-family: Arial, sans-serif;
+          text-align: center;
+          animation: greenFlash 1.5s ease forwards;
+        `;
+        
+        flashOverlay.innerHTML = `
+          <div style="font-size: 80px; margin-bottom: 20px;">✅</div>
+          <div style="font-size: 36px; font-weight: bold; margin-bottom: 10px;">EXAM SUBMITTED!</div>
+          <div style="font-size: 20px; color: #d4edda;">Loading your results...</div>
+        `;
+        
+        const flashStyle = document.createElement('style');
+        flashStyle.textContent = `
+          @keyframes greenFlash {
+            0% { opacity: 1; transform: scale(1); }
+            70% { opacity: 1; transform: scale(1); }
+            100% { opacity: 0; transform: scale(1.05); display: none; }
+          }
+        `;
+        document.head.appendChild(flashStyle);
+        document.body.appendChild(flashOverlay);
+        
+        setTimeout(() => {
+          if (flashOverlay.parentNode) {
+            flashOverlay.parentNode.removeChild(flashOverlay);
+          }
+        }, 1500);
+        
+        // ============================================================
+        // SHOW EXIT BUTTON
+        // ============================================================
+        const exitBtn = document.getElementById('closeSummaryBtn');
+        exitBtn.style.display = 'inline-block';
+        exitBtn.textContent = '✖ Exit Exam';
+        exitBtn.onclick = function() {
+          if (confirm('✅ Your exam has been submitted successfully! Are you sure you want to exit?')) {
+            closeExamTab();
+          }
+        };
+        
+        showToast('✅ Exam submitted successfully!', 'success', 3000);
+      });
     }
-  }, 1500);
+  }, 1000);
   
   // ============================================================
-  // ✅ EXIT BUTTON - HIDDEN UNTIL FORM SUBMISSION CONFIRMED
+  // EXIT BUTTON - HIDDEN INITIALLY
   // ============================================================
   const exitBtn = document.getElementById('closeSummaryBtn');
-  exitBtn.textContent = 'Please wait for the SUBMIT button before closing this page';
-  exitBtn.style.background = 'linear-gradient(145deg, #dc3545, #c82333)';
-  exitBtn.style.padding = '12px 30px';
-  exitBtn.style.fontSize = '18px';
-  exitBtn.style.border = 'none';
-  exitBtn.style.borderRadius = '8px';
-  exitBtn.style.color = 'white';
-  exitBtn.style.cursor = 'pointer';
-  exitBtn.style.display = 'none'; // ✅ HIDDEN BY DEFAULT - WAITING FOR SUBMISSION
-  
-  exitBtn.onclick = function() {
-    if (confirm('✅ Your exam has been submitted successfully! Are you sure you want to exit?')) {
-      closeExamTab();
-    }
-  };
-  
-  // ✅ SHOW EXIT BUTTON ONLY AFTER FORM SUBMISSION
-  const submissionStatus = document.getElementById('summarySubmissionStatus');
-  if (submissionStatus) {
-    const isSuccess = submissionStatus.textContent.includes('successfully submitted');
-    const isSubmitted = googleFormsSubmissionStatus === 'success' || 
-                        localStorage.getItem('exam_submitted') === 'true';
-    
-    if (isSuccess || isSubmitted) {
-      exitBtn.style.display = 'inline-block';
-      console.log('✅ Exit button shown - Form submission confirmed');
-    } else {
-      // Keep checking for submission status
-      const checkInterval = setInterval(function() {
-        const statusText = submissionStatus.textContent || '';
-        if (statusText.includes('successfully submitted') || 
-            googleFormsSubmissionStatus === 'success') {
-          exitBtn.style.display = 'inline-block';
-          clearInterval(checkInterval);
-          console.log('✅ Exit button now shown - Submission completed');
-        }
-      }, 1000);
-      
-      setTimeout(function() {
-        clearInterval(checkInterval);
-        if (exitBtn.style.display !== 'inline-block') {
-          console.log('⚠️ Submission still pending - Exit button hidden');
-        }
-      }, 10000);
-    }
-  }
-  
-  // ✅ Add submission status observer
-  const observer = new MutationObserver(function() {
-    const statusDiv = document.getElementById('summarySubmissionStatus');
-    if (statusDiv && statusDiv.textContent.includes('successfully submitted')) {
-      exitBtn.style.display = 'inline-block';
-      observer.disconnect();
-      console.log('✅ Exit button shown via observer');
-    }
-  });
-  
-  const statusDiv = document.getElementById('summarySubmissionStatus');
-  if (statusDiv) {
-    observer.observe(statusDiv, { childList: true, subtree: true, characterData: true });
-  }
+  exitBtn.style.display = 'none';
 }
 // ===== STRONG FULL SCREEN FOR RESULTS TABLE =====
 // This runs every 2 seconds and forces full screen when results are showing
