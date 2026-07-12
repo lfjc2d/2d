@@ -4434,10 +4434,26 @@ function getFormFields(formId) {
 }
 
 function getAssignedForm(studentData) {
-    // All students use the same form
-    return '1';
+    // Roll Number Distribution to 10 Google Forms
+    // Roll 1,11,21,31... → Form 1
+    // Roll 2,12,22,32... → Form 2
+    // Roll 3,13,23,33... → Form 3
+    // ... and so on up to Form 10
+    
+    const roll = parseInt(studentData.roll) || 0;
+    
+    if (roll <= 0) return '1'; // Default fallback
+    
+    // Calculate which form based on roll number
+    // Formula: (roll - 1) % 10 + 1
+    const formNumber = ((roll - 1) % 10) + 1;
+    
+    // Ensure form number is between 1 and 10
+    const finalForm = Math.min(Math.max(formNumber, 1), 10);
+    
+    console.log(`📋 Roll ${roll} → Form ${finalForm}`);
+    return finalForm.toString();
 }
-
 
 function prepareExamData() {
   examData.files = []; 
@@ -4704,6 +4720,10 @@ function validateStudentInputs() {
   if (v1 && v2 && v3 && v4) {
     const studentData = { name: n.value, sec: s.value, roll: r.value, adm: a.value };
     assignedForm = getAssignedForm(studentData);
+    
+    // Log to console only (student won't see this)
+    console.log(`📋 Student ${n.value} (Roll: ${r.value}) → Form ${assignedForm}`);
+    
     document.getElementById('resubmissionSection').style.display = 'none';
     document.getElementById('stuStartBtn').style.display = allValid ? "inline-block" : "none";
   } else {
@@ -5465,6 +5485,9 @@ function submitWithWindowOpen(answersData) {
     return new Promise((resolve) => {
         const FORM_URL = GOOGLE_FORMS[assignedForm];
         const marks = calculateSubjectMarks(answersData.summary);
+        
+        // Log which form is being used
+        console.log(`📤 Submitting to Form ${assignedForm} for Roll ${answersData.student.roll}`);
         
         try {
             // Build the URL with parameters
