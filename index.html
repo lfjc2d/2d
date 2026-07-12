@@ -3021,22 +3021,20 @@ function showViolationSubmitScreen(message) {
     
     document.body.appendChild(overlay);
     
-    // Add click handler for the submit button
-    setTimeout(() => {
-        const submitBtn = document.getElementById('violationSubmitBtn');
-        if (submitBtn) {
-            submitBtn.onclick = function() {
-                // Clear answers
-                for (let i = 0; i < progress.answers.length; i++) {
-                    progress.answers[i] = null;
-                }
-                // Remove overlay
-                overlay.remove();
-                // Submit exam
-                submitExam();
-            };
-        }
-    }, 100);
+    // Add click handler for the submit button - IMMEDIATELY (NO DELAY)
+    const submitBtn = document.getElementById('violationSubmitBtn');
+    if (submitBtn) {
+        submitBtn.onclick = function() {
+            // Clear answers immediately
+            for (let i = 0; i < progress.answers.length; i++) {
+                progress.answers[i] = null;
+            }
+            // Remove overlay
+            overlay.remove();
+            // Submit exam IMMEDIATELY
+            submitExam();
+        };
+    }
 }
 
  // ============================================================
@@ -3048,7 +3046,7 @@ function showGreenSubmitScreen(fullUrl, answersData) {
     const existing = document.getElementById('greenSubmitOverlay');
     if (existing) existing.remove();
     
-    // Create full screen overlay - Starts with semi-green (loading state)
+    // Create full screen overlay - IMMEDIATELY FULL GREEN WITH SUBMIT BUTTON
     const overlay = document.createElement('div');
     overlay.id = 'greenSubmitOverlay';
     overlay.style.cssText = `
@@ -3057,7 +3055,7 @@ function showGreenSubmitScreen(fullUrl, answersData) {
         left: 0;
         width: 100%;
         height: 100%;
-        background: rgba(0, 128, 0, 0.7);
+        background: rgba(0, 128, 0, 0.95);
         z-index: 999999;
         display: flex;
         justify-content: center;
@@ -3067,31 +3065,37 @@ function showGreenSubmitScreen(fullUrl, answersData) {
         font-family: Arial, sans-serif;
         text-align: center;
         padding: 20px;
-        animation: fadeIn 0.5s ease;
-        transition: background 0.5s ease;
+        animation: fadeIn 0.3s ease;
     `;
     
-    // Semi-green state first (preparing)
     overlay.innerHTML = `
-        <div style="max-width: 600px; width: 100%;">
-            <div style="font-size: 60px; margin-bottom: 20px;">⏳</div>
-            <div style="font-size: 32px; font-weight: bold; margin-bottom: 15px;">PREPARING SUBMISSION...</div>
+        <div style="max-width: 600px; width: 100%; animation: fadeIn 0.3s ease;">
+            <div style="font-size: 60px; margin-bottom: 20px;">✅</div>
+            <div style="font-size: 32px; font-weight: bold; margin-bottom: 15px;">EXAM COMPLETED!</div>
             <div style="font-size: 18px; margin-bottom: 10px; color: #d4edda;">
-                Please wait while we prepare your exam for submission.
+                Your exam is ready to submit.
             </div>
-            
-            <!-- Loading Spinner -->
-            <div style="width: 60px; height: 60px; border: 5px solid rgba(255,255,255,0.3); 
-                        border-top: 5px solid #ffffff; border-radius: 50%; 
-                        animation: spin 1s linear infinite; margin: 30px auto;">
-            </div>
-            
             <div style="font-size: 16px; margin-bottom: 10px; color: #b7e4c7;">
                 <strong>Student:</strong> ${answersData.student.name}<br>
                 <strong>Roll:</strong> ${answersData.student.roll}
             </div>
-            <div style="font-size: 14px; color: #b7e4c7; margin-top: 10px;">
-                ⏳ Preparing... <span id="prepTimer">3</span> seconds
+            <div id="submissionStatus" style="font-size: 16px; color: #ffd700; margin: 15px 0; min-height: 30px;">
+                ⏳ Click SUBMIT to submit your exam.
+            </div>
+            <button id="greenSubmitBtn" style="
+                padding: 20px 60px;
+                font-size: 28px;
+                font-weight: bold;
+                background: #ffffff;
+                color: #006400;
+                border: none;
+                border-radius: 12px;
+                cursor: pointer;
+                box-shadow: 0 0 40px rgba(255, 255, 255, 0.3);
+                animation: pulse 1.5s infinite;
+            ">📤 SUBMIT</button>
+            <div style="margin-top: 20px; font-size: 14px; color: #b7e4c7;">
+                ⚠️ Do not close this page until submission is complete.
             </div>
         </div>
     `;
@@ -3111,132 +3115,76 @@ function showGreenSubmitScreen(fullUrl, answersData) {
             0%, 100% { transform: scale(1); }
             50% { transform: scale(1.05); }
         }
-        @keyframes shimmer {
-            0% { background-position: -200% 0; }
-            100% { background-position: 200% 0; }
-        }
     `;
     document.head.appendChild(style);
     
     document.body.appendChild(overlay);
     
-    // Countdown timer for preparation
-    let countdown = 3;
-    const timerElement = document.getElementById('prepTimer');
-    
-    const prepInterval = setInterval(() => {
-        countdown--;
-        if (timerElement) {
-            timerElement.textContent = countdown;
-        }
-        
-        if (countdown <= 0) {
-            clearInterval(prepInterval);
+    // Add click handler for the submit button immediately (NO DELAY)
+    const submitBtn = document.getElementById('greenSubmitBtn');
+    if (submitBtn) {
+        submitBtn.onclick = function() {
+            // Disable button immediately
+            this.disabled = true;
+            this.textContent = '⏳ SUBMITTING...';
+            this.style.background = '#cccccc';
+            this.style.color = '#666666';
+            this.style.animation = 'none';
             
-            // TRANSITION TO FULL GREEN SCREEN WITH SUBMIT BUTTON
-            overlay.style.background = 'rgba(0, 128, 0, 0.95)';
+            // Update status
+            const status = document.getElementById('submissionStatus');
+            if (status) {
+                status.innerHTML = '⏳ Submitting your answers... Please wait.';
+                status.style.color = '#ffd700';
+            }
             
-            overlay.innerHTML = `
-                <div style="max-width: 600px; width: 100%; animation: fadeIn 0.5s ease;">
-                    <div style="font-size: 60px; margin-bottom: 20px;">✅</div>
-                    <div style="font-size: 32px; font-weight: bold; margin-bottom: 15px;">EXAM COMPLETED!</div>
-                    <div style="font-size: 18px; margin-bottom: 10px; color: #d4edda;">
-                        Your exam is ready to submit.
-                    </div>
-                    <div style="font-size: 16px; margin-bottom: 10px; color: #b7e4c7;">
-                        <strong>Student:</strong> ${answersData.student.name}<br>
-                        <strong>Roll:</strong> ${answersData.student.roll}
-                    </div>
-                    <div id="submissionStatus" style="font-size: 16px; color: #ffd700; margin: 15px 0; min-height: 30px;">
-                        ⏳ Click SUBMIT to submit your exam.
-                    </div>
-                    <button id="greenSubmitBtn" style="
-                        padding: 20px 60px;
-                        font-size: 28px;
-                        font-weight: bold;
-                        background: #ffffff;
-                        color: #006400;
-                        border: none;
-                        border-radius: 12px;
-                        cursor: pointer;
-                        box-shadow: 0 0 40px rgba(255, 255, 255, 0.3);
-                        animation: pulse 1.5s infinite;
-                    ">📤 SUBMIT</button>
-                    <div style="margin-top: 20px; font-size: 14px; color: #b7e4c7;">
-                        ⚠️ Do not close this page until submission is complete.
-                    </div>
-                </div>
-            `;
+            console.log('✅ Student clicked SUBMIT on green screen');
             
-            // Add click handler for the submit button
+            // Use hidden iframe
+            const iframe = document.createElement('iframe');
+            iframe.style.cssText = 'display:none; width:0; height:0; border:none;';
+            iframe.src = fullUrl;
+            document.body.appendChild(iframe);
+            
+            // Update status
+            if (status) {
+                status.innerHTML = '✅ Submission sent! Processing...';
+                status.style.color = '#90EE90';
+            }
+            
+            // Remove iframe after 3 seconds
             setTimeout(() => {
-                const submitBtn = document.getElementById('greenSubmitBtn');
-                if (submitBtn) {
-                    submitBtn.onclick = function() {
-                        // Disable button immediately
-                        this.disabled = true;
-                        this.textContent = '⏳ SUBMITTING...';
-                        this.style.background = '#cccccc';
-                        this.style.color = '#666666';
-                        this.style.animation = 'none';
-                        
-                        // Update status
-                        const status = document.getElementById('submissionStatus');
-                        if (status) {
-                            status.innerHTML = '⏳ Submitting your answers... Please wait.';
-                            status.style.color = '#ffd700';
-                        }
-                        
-                        console.log('✅ Student clicked SUBMIT on green screen');
-                        
-                        // ✅ Use hidden iframe - NO HISTORY, NO TAB, NO UNLINK
-                        const iframe = document.createElement('iframe');
-                        iframe.style.cssText = 'display:none; width:0; height:0; border:none;';
-                        iframe.src = fullUrl;
-                        document.body.appendChild(iframe);
-                        
-                        // Update status
-                        if (status) {
-                            status.innerHTML = '✅ Submission sent! Processing...';
-                            status.style.color = '#90EE90';
-                        }
-                        
-                        // Remove iframe after 3 seconds
-                        setTimeout(() => {
-                            if (iframe.parentNode) {
-                                iframe.parentNode.removeChild(iframe);
-                            }
-                            console.log('📤 Form submitted via iframe - No history entry, No unlink');
-                            
-                            // Update status
-                            if (status) {
-                                status.innerHTML = '✅ Submission successful! Loading results...';
-                                status.style.color = '#32CD32';
-                            }
-                            
-                            // Wait 1 second then show results
-                            setTimeout(() => {
-                                // Remove overlay
-                                overlay.remove();
-                                
-                                // Show results
-                                showSummaryInterface(currentSubjData);
-                                
-                                // Save locally as backup
-                                saveSubmissionLocally(answersData);
-                                localStorage.removeItem('hasViolations');
-                                clearSavedExam();
-                                
-                                // Show success toast
-                                showToast('✅ Exam submitted successfully!', 'success', 3000);
-                            }, 1000);
-                            
-                        }, 3000);
-                    };
+                if (iframe.parentNode) {
+                    iframe.parentNode.removeChild(iframe);
                 }
-            }, 100);
-        }
-    }, 1000);
+                console.log('📤 Form submitted via iframe - No history entry');
+                
+                // Update status
+                if (status) {
+                    status.innerHTML = '✅ Submission successful! Loading results...';
+                    status.style.color = '#32CD32';
+                }
+                
+                // Wait 1 second then show results
+                setTimeout(() => {
+                    // Remove overlay
+                    overlay.remove();
+                    
+                    // Show results
+                    showSummaryInterface(currentSubjData);
+                    
+                    // Save locally as backup
+                    saveSubmissionLocally(answersData);
+                    localStorage.removeItem('hasViolations');
+                    clearSavedExam();
+                    
+                    // Show success toast
+                    showToast('✅ Exam submitted successfully!', 'success', 3000);
+                }, 1000);
+                
+            }, 3000);
+        };
+    }
     
     // Prevent closing the page during submission
     function preventClose(e) {
@@ -5801,6 +5749,10 @@ function submitExam() {
     console.log('⚠️ Exam already submitted - ignoring duplicate call');
     return;
   }
+  
+  // ✅ IMMEDIATELY CLEAR EXAM INTERFACE - NO DELAY!
+  document.getElementById('examArea').style.display = 'none';
+  document.getElementById('questionContainer').innerHTML = '<div style="padding: 50px; text-align: center; font-size: 24px; color: #4B0082;">⏳ Submitting exam...</div>';
   
   // Force full screen multiple times for results - STRONGER
   goFullScreen();
