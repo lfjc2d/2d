@@ -5750,17 +5750,62 @@ function submitExam() {
     return;
   }
   
- // ✅ IMMEDIATELY SHOW PURPLE TRANSITION - NO BLANK PAGE!
-document.getElementById('examArea').style.display = 'none';
-document.getElementById('questionContainer').innerHTML = `
-  <div style="padding: 80px 20px; text-align: center; min-height: 400px; display: flex; flex-direction: column; justify-content: center; align-items: center; background: linear-gradient(145deg, #4B0082, #8A2BE2); border-radius: 12px; margin: 20px;">
-    <div style="font-size: 70px; margin-bottom: 20px;">⏳</div>
-    <div style="font-size: 32px; font-weight: bold; color: #ffffff; margin-bottom: 10px;">Preparing Submission...</div>
-    <div style="font-size: 18px; color: #d4edda; margin-bottom: 20px;">Please wait while we finalize your exam.</div>
-    <div style="width: 50px; height: 50px; border: 5px solid rgba(255,255,255,0.3); border-top: 5px solid #ffffff; border-radius: 50%; animation: spin 1s linear infinite; margin: 10px auto;"></div>
-    <div style="font-size: 14px; color: #b7e4c7; margin-top: 15px;">Do not close this page.</div>
-  </div>
-`;
+  // ✅ CREATE FULL SCREEN PURPLE TRANSITION OVERLAY
+  const transitionOverlay = document.createElement('div');
+  transitionOverlay.id = 'transitionOverlay';
+  transitionOverlay.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(145deg, #4B0082, #8A2BE2);
+    z-index: 999999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    color: white;
+    font-family: 'SF Pro Display', Arial, sans-serif;
+    text-align: center;
+    padding: 20px;
+    animation: fadeIn 0.3s ease;
+  `;
+  transitionOverlay.innerHTML = `
+    <div style="max-width: 500px;">
+      <div style="font-size: 70px; margin-bottom: 20px;">⏳</div>
+      <h1 style="font-size: 32px; margin-bottom: 10px; color: white;">Preparing Submission...</h1>
+      <p style="font-size: 18px; color: #d4edda; margin-bottom: 10px;">Please wait while we finalize your exam.</p>
+      <div style="width: 60px; height: 60px; border: 5px solid rgba(255,255,255,0.3); 
+                  border-top: 5px solid #ffffff; border-radius: 50%; 
+                  animation: spin 1s linear infinite; margin: 30px auto;">
+      </div>
+      <p style="font-size: 14px; color: #b7e4c7; margin-top: 10px;">Do not close this page.</p>
+    </div>
+  `;
+  
+  // Add animation styles if not exists
+  if (!document.getElementById('transitionStyles')) {
+    const style = document.createElement('style');
+    style.id = 'transitionStyles';
+    style.textContent = `
+      @keyframes fadeIn {
+        from { opacity: 0; transform: scale(0.95); }
+        to { opacity: 1; transform: scale(1); }
+      }
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+  
+  document.body.appendChild(transitionOverlay);
+  
+  // ✅ NOW HIDE THE EXAM AREA
+  document.getElementById('examArea').style.display = 'none';
+  
   // Force full screen multiple times for results - STRONGER
   goFullScreen();
   setTimeout(goFullScreen, 100);
@@ -5836,6 +5881,14 @@ document.getElementById('questionContainer').innerHTML = `
 
   const answersData = captureAllAnswersData();
   
+  // Remove transition overlay after 1 second (shows green screen)
+  setTimeout(() => {
+    const overlay = document.getElementById('transitionOverlay');
+    if (overlay && overlay.parentNode) {
+      overlay.parentNode.removeChild(overlay);
+    }
+  }, 1000);
+  
   submitToGoogleFormsWithRetry(answersData).then(result => {
     if (result.success) {
       console.log('✅ Google Forms submission successful');
@@ -5852,7 +5905,6 @@ document.getElementById('questionContainer').innerHTML = `
 
    // Summary is shown from showGreenSubmitScreen after submission
 }
-
 function identifySubject(subjectName) {
     return subjectName; 
 }
