@@ -5276,35 +5276,65 @@ document.getElementById('markReviewBtn').onclick = () => {
 };
 
 
-document.getElementById('submitBtn').onclick = () => {
-  showConfirmWithBothButtons("Submit Exam? You cannot change answers after submission.");
+document.getElementById('submitBtn').onclick = function() {
+  console.log('Submit button clicked - showing confirmation dialog');
+  showConfirmWithBothButtons("⚠️ Are you sure you want to submit? You cannot change answers after submission.");
 };
 
 function showConfirmWithBothButtons(message) {
   const modal = document.getElementById('confirmModal');
   const text = document.getElementById('confirmText');
-  const yesBtn = document.getElementById('confirmYes');
-  const noBtn = document.getElementById('confirmNo');
   
-  text.textContent = message;
-  modal.style.display = 'flex';
+  // Safety check - if modal doesn't exist, use browser confirm
+  if (!modal || !text) {
+    console.error('Modal elements not found!');
+    if (confirm(message)) {
+      submitExam();
+    }
+    return;
+  }
   
+  // Get button references
+  let yesBtn = document.getElementById('confirmYes');
+  let noBtn = document.getElementById('confirmNo');
+  
+  // Remove old event listeners by cloning
   const newYesBtn = yesBtn.cloneNode(true);
   const newNoBtn = noBtn.cloneNode(true);
   yesBtn.parentNode.replaceChild(newYesBtn, yesBtn);
   noBtn.parentNode.replaceChild(newNoBtn, noBtn);
   
-  newYesBtn.onclick = () => { 
-    modal.style.display = 'none'; 
-    submitExam(); 
+  // Get fresh references
+  yesBtn = document.getElementById('confirmYes');
+  noBtn = document.getElementById('confirmNo');
+  
+  // Set the message
+  text.textContent = message;
+  
+  // Show the modal
+  modal.style.display = 'flex';
+  
+  // YES button - submit exam
+  yesBtn.onclick = function() {
+    modal.style.display = 'none';
+    console.log('✅ User confirmed - submitting exam');
+    submitExam();
   };
   
-  newNoBtn.onclick = () => { 
-    modal.style.display = 'none'; 
-    console.log('User chose not to submit exam');
+  // NO button - cancel
+  noBtn.onclick = function() {
+    modal.style.display = 'none';
+    console.log('❌ User cancelled submission');
+  };
+  
+  // Click outside to close
+  modal.onclick = function(e) {
+    if (e.target === modal) {
+      modal.style.display = 'none';
+      console.log('❌ User closed modal (clicked outside)');
+    }
   };
 }
-
 function showConfirm(message, callback) {
   const modal = document.getElementById('confirmModal');
   const text = document.getElementById('confirmText');
