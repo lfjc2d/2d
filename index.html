@@ -4881,8 +4881,9 @@ function renderQuestion() {
   const idx = progress.currentIndex;
   // ✅ Only start timer if this question hasn't been waited on yet
   // If already waited, keep the existing start time (no reset)
-  if (!questionWaited[idx]) {
+ if (!questionWaited[idx] && !questionTimerStarted[idx]) {
     questionStartTime = Date.now();
+    questionTimerStarted[idx] = true;  // Mark timer as started
   }
   const container = document.getElementById('questionContainer');
   // ... rest of the function (DO NOT CHANGE ANYTHING BELOW THIS)
