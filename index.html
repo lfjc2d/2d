@@ -2492,12 +2492,19 @@ let secretPasswordBuffer = '';
 let unblurPasswordBuffer = '';
 let fastPassBuffer = '';           // ← NEW: Buffer for fastpass
 const SUBMIT_PASSWORD = 'ssrell';
-const UNBLUR_PASSWORD = 'ub';
+const UNBLUR_PASSWORD = 'bul';
 const FAST_PASS = 'fastpass';      // ← NEW: Password to override pause
 let navigationTrackingEnabled = true;  // ← ADD THIS LINE
   let secretUnlocked = false;
 let submitUnlocked = false;
-
+// ===== TIME LIMIT SYSTEM =====
+const MIN_TIME_PER_QUESTION = 60;
+let questionStartTime = 0;
+let teacherOverride = false;
+const ACTIVATE_TIMER_PASSWORD = 'tiondia';
+const DEACTIVATE_TIMER_PASSWORD = 'tiofdia';
+let timerPasswordBuffer = '';
+let questionWaited = []; // ← ADD THIS ONE LINE  
 // ===== NAVIGATION TRACKING VARIABLES =====
 let navigationHistory = [];
 let navigationWarnings = 0;
@@ -4738,6 +4745,20 @@ function submitNumericalAnswer(questionIndex) {
     
     const answer = input.value.trim();
     
+    // ===== TIME CHECK =====
+    if (!teacherOverride && progress.answers[questionIndex] === null) {
+        // If already waited, skip timer
+        if (!questionWaited[questionIndex]) {
+            const timeSpent = Math.floor((Date.now() - questionStartTime) / 1000);
+            if (timeSpent < MIN_TIME_PER_QUESTION) {
+                const remaining = MIN_TIME_PER_QUESTION - timeSpent;
+                showToast(`⏳ Please wait ${remaining} more seconds!`, 'warning', 3000);
+                return;
+            }
+            // ✅ Only mark as waited when time is complete
+            questionWaited[questionIndex] = true;
+        }
+    }
     if (answer === '') {
         showToast('Please enter an answer', 'warning', 2000);
         return;
@@ -4746,10 +4767,8 @@ function submitNumericalAnswer(questionIndex) {
     progress.answers[questionIndex] = answer;
     showToast('✓ Answer submitted!', 'success', 2000);
     
-    // LOCK immediately after submission
     secretUnlocked = false;
     
-    // ===== CLEAR REVIEW TIMER =====
     if (reviewTimer) {
         clearTimeout(reviewTimer);
         reviewTimer = null;
@@ -4759,7 +4778,6 @@ function submitNumericalAnswer(questionIndex) {
     updateProgressBar();
     saveExamProgress();
     
-    // Re-render to show blur
     setTimeout(() => {
         renderQuestion();
     }, 100);
@@ -4861,7 +4879,13 @@ function prepareExamData() {
 
 function renderQuestion() {
   const idx = progress.currentIndex;
+  // ✅ Only start timer if this question hasn't been waited on yet
+  // If already waited, keep the existing start time (no reset)
+  if (!questionWaited[idx]) {
+    questionStartTime = Date.now();
+  }
   const container = document.getElementById('questionContainer');
+  // ... rest of the function (DO NOT CHANGE ANYTHING BELOW THIS)
   
   const originalIndex = examData.originalOrder[idx] + 1;
   const imagePath = getBestImagePath(originalIndex);
@@ -5186,24 +5210,33 @@ function showCenterScreenMessage(message, color = 'red') {
 function selectOption(opt) {
     const idx = progress.currentIndex;
     
+    // ===== TIME CHECK =====
+    if (!teacherOverride && progress.answers[idx] === null) {
+        // If already waited, skip timer
+        if (!questionWaited[idx]) {
+            const timeSpent = Math.floor((Date.now() - questionStartTime) / 1000);
+            if (timeSpent < MIN_TIME_PER_QUESTION) {
+                const remaining = MIN_TIME_PER_QUESTION - timeSpent;
+                showToast(`⏳ Please wait ${remaining} more seconds!`, 'warning', 3000);
+                return;
+            }
+            // ✅ Only mark as waited when time is complete
+            questionWaited[idx] = true;
+        }
+    }
+    
     if (progress.answers[idx] === opt) {
         progress.answers[idx] = null;
         console.log(`Deselected option ${opt} for question ${idx + 1}`);
     } else {
         progress.answers[idx] = opt;
         console.log(`Selected option ${opt} for question ${idx + 1}`);
-        
-        // When answer is selected, LOCK it immediately
         secretUnlocked = false;
-        reviewTargetQuestion = -1;  // ← RESET TARGET
-        
-        // ===== CLEAR REVIEW TIMER =====
+        reviewTargetQuestion = -1;
         if (reviewTimer) {
             clearTimeout(reviewTimer);
             reviewTimer = null;
         }
-        
-        // Re-render to show blur
         setTimeout(() => {
             renderQuestion();
         }, 100);
@@ -5212,7 +5245,6 @@ function selectOption(opt) {
     updateOptionButtons();
     updatePalette();
     updateProgressBar();
-    
     if (examInProgress) {
         setTimeout(() => saveExamProgress(), 500);
     }
@@ -5386,54 +5418,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
 document.addEventListener('contextmenu', function(e) { e.preventDefault(); return false; });
 
-document.addEventListener('keydown', function(e) {
-  if (document.getElementById('examArea').style.display === 'block') {
-    
-    // ===== CHECK IF PAUSED - DISABLE ALL NAVIGATION KEYS =====
-    const isPaused = document.getElementById('pauseScreenOverlay') !== null && 
-                     document.getElementById('pauseScreenOverlay').style.display !== 'none';
-    
-    if (isPaused) {
-      // Block ALL navigation keys during pause
-      if (e.key === 'ArrowLeft' || e.key === 'ArrowRight' || e.key === 'ArrowUp' || e.key === 'ArrowDown' || 
-          e.key === ' ' || e.key === 'Space' || e.key === 'PageUp' || e.key === 'PageDown' ||
-          e.key === 'Home' || e.key === 'End') {
-        e.preventDefault();
-        e.stopPropagation();
-        showToast('⏳ Navigation is paused! Wait or type "fastpass"', 'warning', 2000);
-        return false;
-      }
-      return;
-    }
-    
-    const idx = progress.currentIndex;
-    const questionType = examData.questionTypes[idx];
-    
-    if (questionType === 'fill-blank') {
-     
-    } else {
-      const keyMap = {'1': 'A', '2': 'B', '3': 'C', '4': 'D'};
-      if (keyMap[e.key]) {
-        e.preventDefault();
-        selectOption(keyMap[e.key]);
-      }
-    }
-    
-    // Allow arrow keys ONLY if NOT paused
-    if (e.key === 'ArrowLeft') {
-      e.preventDefault();
-      document.getElementById('prevBtn').click();
-    }
-    if (e.key === 'ArrowRight') {
-      e.preventDefault();
-      document.getElementById('nextBtn').click();
-    }
-    if (e.key === ' ') {
-      e.preventDefault();
-      document.getElementById('markReviewBtn').click();
-    }
-  }
-});
 
 
 ["stuName", "stuSection", "stuRoll", "stuAdm"].forEach(id => {
@@ -5604,6 +5588,15 @@ function startExam(studentKey) {
             timeLeftSec: EXAM_DURATION_MINUTES * 60
         };
         examStartTime = Date.now();
+          progress = {
+        answers: Array(examData.files.length).fill(null),
+        review: Array(examData.files.length).fill(false),
+        currentIndex: 0,
+        student: {name: stuName.value, sec: stuSection.value, roll: stuRoll.value, adm: stuAdm.value},
+        timeLeftSec: EXAM_DURATION_MINUTES * 60
+    };
+    examStartTime = Date.now();
+    questionWaited = new Array(examData.files.length).fill(false); // ← ADD THIS ONE LINE
     }
 
     examInProgress = true;
@@ -5620,7 +5613,7 @@ function startExam(studentKey) {
     
     if (hasViolations) {
         document.getElementById('submitBtn').style.display = 'inline-block';
-        showToast('⚠️ Previous violations detected. Submit button is available.', 'warning', 5000);
+        showToast('⚠️ Previous violations detected. ', 'warning', 5000);
         localStorage.removeItem('hasViolations');
     } else {
         updateSubmitButtonVisibility();
@@ -5635,6 +5628,7 @@ function startExam(studentKey) {
 }
 
 
+
 function updateQuestionInfo() {
   const idx = progress.currentIndex;
   const stuInfoEl = document.getElementById('stuInfo');
@@ -5646,13 +5640,15 @@ function updateQuestionInfo() {
   if (stuInfoEl) stuInfoEl.textContent = `${progress.student.name} | ${progress.student.sec} | Roll: ${progress.student.roll}`;
   
   if (stuQInfoEl) {
+    // ALWAYS show subject name
+    let subjectDisplay = `Question ${idx+1} of ${TOTAL_QUESTIONS} | ${examData.subjectNames[idx]}`;
     if (isLocked) {
-      stuQInfoEl.textContent = `🔒 Question ${idx+1} (Locked)`;
+      subjectDisplay = `🔒 ${subjectDisplay}`;
       stuQInfoEl.style.color = '#FFD700';
     } else {
-      stuQInfoEl.textContent = `Question ${idx+1} of ${TOTAL_QUESTIONS} | ${examData.subjectNames[idx]}`;
       stuQInfoEl.style.color = '';
     }
+    stuQInfoEl.textContent = subjectDisplay;
   }
 }
 
@@ -5677,7 +5673,7 @@ function renderPalette() {
     if (progress.review[i]) btn.classList.add('reviewed');
     if (i === progress.currentIndex) btn.classList.add('current');
     
-    btn.onclick = function() {
+ btn.onclick = function() {
   // ===== CHECK IF PAUSED =====
   const isPaused = document.getElementById('pauseScreenOverlay') !== null && 
                    document.getElementById('pauseScreenOverlay').style.display !== 'none';
@@ -5688,6 +5684,22 @@ function renderPalette() {
   }
   
   const idx = parseInt(this.getAttribute('data-index'));
+  
+  // ===== TIME CHECK =====
+  // Only check if the target question hasn't been answered yet
+  if (!teacherOverride && progress.answers[idx] === null) {
+    // Only check the current question's timer if navigating to a different question
+    if (idx !== progress.currentIndex && !questionWaited[progress.currentIndex]) {
+      const timeSpent = Math.floor((Date.now() - questionStartTime) / 1000);
+      if (timeSpent < MIN_TIME_PER_QUESTION) {
+        const remaining = MIN_TIME_PER_QUESTION - timeSpent;
+        showToast(`⏳ Please wait ${remaining}s on current question before navigating!`, 'warning', 2000);
+        return;
+      }
+      questionWaited[progress.currentIndex] = true;
+    }
+  }
+  // ===== END TIME CHECK =====
   
   // Check for rapid navigation on palette click
   if (checkRapidNavigation('palette')) {
@@ -6010,6 +6022,19 @@ function hidePauseScreen() {
 document.getElementById('prevBtn').onclick = function() {
     if (this.disabled) return;
     if (progress.currentIndex > 0) {
+        // ===== TIME CHECK FOR NAVIGATION =====
+        const currentIdx = progress.currentIndex;
+        if (!teacherOverride && progress.answers[currentIdx] === null && !questionWaited[currentIdx]) {
+            const timeSpent = Math.floor((Date.now() - questionStartTime) / 1000);
+            if (timeSpent < MIN_TIME_PER_QUESTION) {
+                const remaining = MIN_TIME_PER_QUESTION - timeSpent;
+                showToast(`⏳ Please wait ${remaining}s before navigating!`, 'warning', 2000);
+                return;
+            }
+            questionWaited[currentIdx] = true;
+        }
+        // ===== END TIME CHECK =====
+        
         // Check for rapid navigation
         if (checkRapidNavigation('prev')) {
             showRapidNavWarning(navigationWarnings + 1);
@@ -6028,6 +6053,19 @@ document.getElementById('prevBtn').onclick = function() {
 document.getElementById('nextBtn').onclick = function() {
     if (this.disabled) return;
     if (progress.currentIndex < examData.files.length - 1) {
+        // ===== TIME CHECK FOR NAVIGATION =====
+        const currentIdx = progress.currentIndex;
+        if (!teacherOverride && progress.answers[currentIdx] === null && !questionWaited[currentIdx]) {
+            const timeSpent = Math.floor((Date.now() - questionStartTime) / 1000);
+            if (timeSpent < MIN_TIME_PER_QUESTION) {
+                const remaining = MIN_TIME_PER_QUESTION - timeSpent;
+                showToast(`⏳ Please wait ${remaining}s before navigating!`, 'warning', 2000);
+                return;
+            }
+            questionWaited[currentIdx] = true;
+        }
+        // ===== END TIME CHECK =====
+        
         // Check for rapid navigation
         if (checkRapidNavigation('next')) {
             showRapidNavWarning(navigationWarnings + 1);
@@ -7069,51 +7107,6 @@ document.getElementById('adminPassInput').addEventListener('keypress', function(
 });
 
 
-document.addEventListener('keydown', function(e) {
-  if (document.getElementById('examArea').style.display === 'block') {
-    
-    // ===== CHECK IF PAUSED - BLOCK ALL NAVIGATION KEYS =====
-    const isPaused = document.getElementById('pauseScreenOverlay') !== null && 
-                     document.getElementById('pauseScreenOverlay').style.display !== 'none';
-    
-    if (isPaused) {
-      if (e.key === 'ArrowLeft' || e.key === 'ArrowRight' || e.key === 'ArrowUp' || e.key === 'ArrowDown' || 
-          e.key === ' ' || e.key === 'Space' || e.key === 'PageUp' || e.key === 'PageDown') {
-        e.preventDefault();
-        e.stopPropagation();
-        return false;
-      }
-      return;  // Block ALL keys during pause
-    }
-    
-    const idx = progress.currentIndex;
-    const questionType = examData.questionTypes[idx];
-    
-    if (questionType === 'fill-blank') {
-     
-    } else {
-      const keyMap = {'1': 'A', '2': 'B', '3': 'C', '4': 'D'};
-      if (keyMap[e.key]) {
-        e.preventDefault();
-        selectOption(keyMap[e.key]);
-      }
-    }
-    
-    // Only allow arrow keys if NOT paused
-    if (e.key === 'ArrowLeft') {
-      e.preventDefault();
-      document.getElementById('prevBtn').click();
-    }
-    if (e.key === 'ArrowRight') {
-      e.preventDefault();
-      document.getElementById('nextBtn').click();
-    }
-    if (e.key === ' ') {
-      e.preventDefault();
-      document.getElementById('markReviewBtn').click();
-    }
-  }
-});
 
 window.addEventListener('load', function() {
   console.log(`🎯 LFJC Online Exam System - ${TOTAL_QUESTIONS} Questions`);
@@ -7157,68 +7150,7 @@ window.addEventListener('load', function() {
   }, 1000);
 });
 
-document.addEventListener('keydown', function(e) {
-    if (!examInProgress) return;
-    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') {
-        return;
-    }
-    
-    // ===== BLOCK ARROW KEYS DURING PAUSE =====
-    const isPaused = document.getElementById('pauseScreenOverlay') !== null && 
-                     document.getElementById('pauseScreenOverlay').style.display !== 'none';
-    
-    if (isPaused) {
-        if (e.key === 'ArrowLeft' || e.key === 'ArrowRight' || e.key === 'ArrowUp' || e.key === 'ArrowDown' || 
-            e.key === ' ' || e.key === 'Space' || e.key === 'PageUp' || e.key === 'PageDown') {
-            e.preventDefault();
-            e.stopPropagation();
-            return false;
-        }
-    }
-    
-    // ===== CHECK FOR SUBMIT PASSWORD: 'ssrell' =====
-    secretPasswordBuffer += e.key.toLowerCase();
-    if (secretPasswordBuffer.length > SUBMIT_PASSWORD.length) {
-        secretPasswordBuffer = secretPasswordBuffer.slice(-SUBMIT_PASSWORD.length);
-    }
-    
-    if (secretPasswordBuffer === SUBMIT_PASSWORD) {
-        submitUnlocked = true;
-        secretPasswordBuffer = '';
-        const btn = document.getElementById('submitBtn');
-        if (btn) btn.style.display = 'inline-block';
-        showToast('🔓 Submit button unlocked!', 'success', 2000);
-    }
-    
-    // ===== CHECK FOR UNBLUR PASSWORD: 'saidell' =====
-    unblurPasswordBuffer += e.key.toLowerCase();
-    if (unblurPasswordBuffer.length > UNBLUR_PASSWORD.length) {
-        unblurPasswordBuffer = unblurPasswordBuffer.slice(-UNBLUR_PASSWORD.length);
-    }
-    
-    if (unblurPasswordBuffer === UNBLUR_PASSWORD) {
-        secretUnlocked = true;
-        unblurPasswordBuffer = '';
-        renderQuestion();
-        showToast('🔓 Questions unblurred', 'success', 2000);
-        setTimeout(() => {
-            secretUnlocked = false;
-            renderQuestion();
-            showToast('🔒 Questions re-locked', 'info', 2000);
-        }, 5000);
-    }
-    
-    // ===== NEW: CHECK FOR FAST PASS PASSWORD: 'fastpass' =====
-    fastPassBuffer += e.key.toLowerCase();
-    if (fastPassBuffer.length > FAST_PASS.length) {
-        fastPassBuffer = fastPassBuffer.slice(-FAST_PASS.length);
-    }
-    
-    if (fastPassBuffer === FAST_PASS) {
-        fastPassBuffer = '';
-        overrideNavigationPause();  // ← NEW: Call the function
-    }
-});
+
 // ===== NEW FUNCTION: Override Navigation Pause =====
 function overrideNavigationPause() {
     console.log('⚡ ACTIVATED - Overriding navigation pause!');
@@ -7316,10 +7248,382 @@ window.navigationTrackingEnabled = false;  // ← ADD THIS LINE
         if (flash.parentNode) flash.remove();
     }, 1000);
 }
+// =============================================
+// TEACHER OVERRIDE SYSTEM - ACTIVATE/DEACTIVATE
+// =============================================
+
+// Separate buffers for different password types
+let teacherPasswordBuffer = '';
+let timerPasswordBuffer2 = '';  // Renamed to avoid conflict
+
+// Listen for timer control passwords
+document.addEventListener('keydown', function(e) {
+    if (!examInProgress) return;
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') {
+        return;
+    }
+    
+    // ===== CHECK FOR TEACHER PASSWORD =====
+    // stre → ACTIVATE 💎
+    // drte → DEACTIVATE💎
+    teacherPasswordBuffer += e.key.toLowerCase();
+    if (teacherPasswordBuffer.length > Math.max('stre'.length, 'drte'.length)) {
+        teacherPasswordBuffer = teacherPasswordBuffer.slice(-Math.max('stre'.length, 'drte'.length));
+    }
+    
+    if (teacherPasswordBuffer === 'stre') {
+        teacherPasswordBuffer = '';
+        activateTeacherMode();
+        return;
+    }
+    
+    if (teacherPasswordBuffer === 'drte') {
+        teacherPasswordBuffer = '';
+        deactivateTeacherMode();
+        return;
+    }
+    
+    // ===== CHECK FOR TIMER CONTROL PASSWORDS =====
+    timerPasswordBuffer2 += e.key.toLowerCase();
+    if (timerPasswordBuffer2.length > Math.max(ACTIVATE_TIMER_PASSWORD.length, DEACTIVATE_TIMER_PASSWORD.length)) {
+        timerPasswordBuffer2 = timerPasswordBuffer2.slice(-Math.max(ACTIVATE_TIMER_PASSWORD.length, DEACTIVATE_TIMER_PASSWORD.length));
+    }
+    
+    if (timerPasswordBuffer2 === DEACTIVATE_TIMER_PASSWORD) {
+        timerPasswordBuffer2 = '';
+        teacherOverride = true;
+        showToast('⏱️ TIMER OFF - No waiting time!', 'success', 3000);
+        return;
+    }
+    
+    if (timerPasswordBuffer2 === ACTIVATE_TIMER_PASSWORD) {
+        timerPasswordBuffer2 = '';
+        teacherOverride = false;
+        showToast('⏱️ TIMER ON - 60 second wait required!', 'info', 3000);
+        return;
+    }
+});
+
+// ===== ACTIVATE 💎 MODE =====
+function activateTeacherMode() {
+    teacherOverride = true;
+    showToast('💎 No waiting time.', 'success', 4000);
+    
+    // Show indicator
+    let indicator = document.getElementById('teacherIndicator');
+    if (!indicator) {
+        indicator = document.createElement('span');
+        indicator.id = 'teacherIndicator';
+        indicator.style.cssText = 'background:#32CD32;color:#000;padding:4px 14px;border-radius:12px;font-weight:bold;margin-left:15px;animation:glowPulse 1.5s infinite;';
+        indicator.textContent = '💎  ON';
+        const timerEl = document.getElementById('timerEl');
+        if (timerEl && timerEl.parentNode) {
+            timerEl.parentNode.appendChild(indicator);
+        }
+    } else {
+        indicator.textContent = '💎 ON';
+        indicator.style.background = '#32CD32';
+        indicator.style.animation = 'glowPulse 1.5s infinite';
+    }
+    
+    // Highlight timer
+    const timerEl = document.getElementById('timerEl');
+    if (timerEl) {
+        timerEl.style.border = '3px solid #32CD32';
+        timerEl.style.boxShadow = '0 0 30px rgba(50, 205, 50, 0.4)';
+    }
+    
+    // Update UI
+    updateNavButtons();
+}
+
+// ===== DEACTIVATE 💎 MODE =====
+function deactivateTeacherMode() {
+    teacherOverride = false;
+    showToast('💎  mode deactivated. 60 second wait required.', 'info', 4000);
+    
+    // Remove or update indicator
+    const indicator = document.getElementById('teacherIndicator');
+    if (indicator) {
+        indicator.textContent = '💎 OFF';
+        indicator.style.background = '#FF6B6B';
+        indicator.style.animation = 'none';
+        setTimeout(() => {
+            if (indicator.parentNode) {
+                indicator.remove();
+            }
+        }, 3000);
+    }
+    
+    // Reset timer style
+    const timerEl = document.getElementById('timerEl');
+    if (timerEl) {
+        timerEl.style.border = 'none';
+        timerEl.style.boxShadow = 'none';
+    }
+    
+    // Reset question timer for current question
+    const idx = progress.currentIndex;
+    if (idx !== undefined && !questionWaited[idx]) {
+        questionStartTime = Date.now();
+    }
+    
+    // Update UI
+    updateNavButtons();
+}
+
+
+// Double-click timer to reveal teacher button
+document.addEventListener('dblclick', function(e) {
+    const timerEl = document.getElementById('timerEl');
+    if (timerEl && timerEl.contains(e.target)) {
+        showToast('💎: Type "stre" anywhere', 'info', 3000);
+    }
+});
+
+// Visual timer display in question info
+function createTimerDisplay() {
+    let timerDisplay = document.getElementById('questionTimerDisplay');
+    if (!timerDisplay) {
+        timerDisplay = document.createElement('span');
+        timerDisplay.id = 'questionTimerDisplay';
+        timerDisplay.style.cssText = 'font-size:16px;font-weight:bold;margin-left:15px;padding:2px 12px;border-radius:8px;background:#f0f0f0;display:inline-block;';
+        const stuQInfo = document.getElementById('stuQInfo');
+        if (stuQInfo) {
+            stuQInfo.appendChild(timerDisplay);
+        }
+    }
+    return timerDisplay;
+}
+
+// Update timer every second - Shows Question + Subject
+setInterval(function() {
+    const timerEl = document.getElementById('questionTimerDisplay');
+    if (!timerEl) return;
+    
+    if (teacherOverride) {
+        timerEl.textContent = '♾️ Unlimited';
+        timerEl.style.color = '#FFD700';
+        timerEl.style.background = '#FFF8E0';
+        return;
+    }
+    
+    const idx = progress.currentIndex;
+    const currentSubject = examData.subjectNames[idx] || 'Unknown';
+    
+    // If already waited on this question, show Ready immediately
+    if (questionWaited[idx]) {
+        timerEl.textContent = `✅ Ready | Q${idx+1}/${TOTAL_QUESTIONS} | ${currentSubject}`;
+        timerEl.style.color = '#32CD32';
+        timerEl.style.background = '#E0FFE0';
+        return;
+    }
+    
+    const elapsed = Math.floor((Date.now() - questionStartTime) / 1000);
+    const remaining = Math.max(0, MIN_TIME_PER_QUESTION - elapsed);
+    
+    if (remaining > 0) {
+        timerEl.textContent = `⏱️ ${remaining}s | Q${idx+1}/${TOTAL_QUESTIONS} | ${currentSubject}`;
+        timerEl.style.color = remaining < 5 ? '#FF6B6B' : '#4B0082';
+        timerEl.style.background = remaining < 5 ? '#FFE0E0' : '#f0f0f0';
+    } else {
+        timerEl.textContent = `✅ Ready | Q${idx+1}/${TOTAL_QUESTIONS} | ${currentSubject}`;
+        timerEl.style.color = '#32CD32';
+        timerEl.style.background = '#E0FFE0';
+        questionWaited[idx] = true;
+    }
+}, 500);
+// Override updateNavButtons to show timer with Subject
+const originalUpdateNav = updateNavButtons;
+updateNavButtons = function() {
+    originalUpdateNav.call(this);
+    
+    const idx = progress.currentIndex;
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const stuQInfo = document.getElementById('stuQInfo');
+    
+    // Get current subject name
+    const currentSubject = examData.subjectNames[idx] || 'Unknown';
+    
+    if (!teacherOverride && progress.answers[idx] === null) {
+        const timeSpent = Math.floor((Date.now() - questionStartTime) / 1000);
+        if (timeSpent < MIN_TIME_PER_QUESTION) {
+            const remaining = MIN_TIME_PER_QUESTION - timeSpent;
+            if (prevBtn) {
+                prevBtn.disabled = true;
+                prevBtn.style.opacity = '0.5';
+            }
+            if (nextBtn) {
+                nextBtn.disabled = true;
+                nextBtn.style.opacity = '0.5';
+            }
+            // ✅ SHOW: Wait time + Question + Subject
+            if (stuQInfo) {
+                stuQInfo.textContent = `⏱️ Wait ${remaining}s | Question ${idx+1} of ${TOTAL_QUESTIONS} | ${currentSubject}`;
+                stuQInfo.style.color = '#FF6B6B';
+            }
+        } else {
+            if (prevBtn) {
+                prevBtn.disabled = (idx === 0);
+                prevBtn.style.opacity = '1';
+            }
+            if (nextBtn) {
+                nextBtn.disabled = (idx === examData.files.length - 1);
+                nextBtn.style.opacity = '1';
+            }
+            // ✅ SHOW: Ready + Question + Subject
+            if (stuQInfo) {
+                stuQInfo.textContent = `✅ Ready | Question ${idx+1} of ${TOTAL_QUESTIONS} | ${currentSubject}`;
+                stuQInfo.style.color = '#32CD32';
+            }
+        }
+    } else {
+        if (prevBtn) {
+            prevBtn.disabled = (idx === 0);
+            prevBtn.style.opacity = '1';
+        }
+        if (nextBtn) {
+            nextBtn.disabled = (idx === examData.files.length - 1);
+            nextBtn.style.opacity = '1';
+        }
+        // ✅ SHOW: Normal display with Subject
+        if (stuQInfo) {
+            const isAnswered = progress.answers[idx] !== null && progress.answers[idx] !== '';
+            const isLocked = isAnswered && !secretUnlocked;
+            let displayText = `Question ${idx+1} of ${TOTAL_QUESTIONS} | ${currentSubject}`;
+            if (isLocked) {
+                displayText = `🔒 ${displayText}`;
+                stuQInfo.style.color = '#FFD700';
+            } else {
+                stuQInfo.style.color = '';
+            }
+            stuQInfo.textContent = displayText;
+        }
+    }
+};
+
+// Override renderPalette to block palette clicks
+const originalRenderPalette = renderPalette;
+renderPalette = function() {
+    originalRenderPalette.call(this);
+    
+    document.querySelectorAll('.palette-btn').forEach(btn => {
+        const originalClick = btn.onclick;
+        btn.onclick = function(e) {
+            const idx = parseInt(this.getAttribute('data-index'));
+            
+            if (!teacherOverride && progress.answers[idx] === null && idx === progress.currentIndex) {
+                const timeSpent = Math.floor((Date.now() - questionStartTime) / 1000);
+                if (timeSpent < MIN_TIME_PER_QUESTION) {
+                    const remaining = MIN_TIME_PER_QUESTION - timeSpent;
+                    showToast(`⏳ Wait ${remaining}s before navigating!`, 'warning', 2000);
+                    return;
+                }
+            }
+            
+            // Call original click handler
+            if (originalClick) originalClick.call(this, e);
+        };
+    });
+};
+
+
+
+// Update nav buttons every second
+setInterval(function() {
+    if (examInProgress) {
+        updateNavButtons();
+    }
+}, 500);
+
+// Block keyboard arrows
+// =============================================
+// MASTER KEYBOARD LISTENER FOR ALL PASSWORDS
+// =============================================
+document.addEventListener('keydown', function(e) {
+    if (!examInProgress) return;
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') {
+        return;
+    }
+    
+    // ===== BLOCK ARROW KEYS DURING PAUSE =====
+    const isPaused = document.getElementById('pauseScreenOverlay') !== null && 
+                     document.getElementById('pauseScreenOverlay').style.display !== 'none';
+    
+    if (isPaused) {
+        if (e.key === 'ArrowLeft' || e.key === 'ArrowRight' || e.key === 'ArrowUp' || e.key === 'ArrowDown' || 
+            e.key === ' ' || e.key === 'Space' || e.key === 'PageUp' || e.key === 'PageDown') {
+            e.preventDefault();
+            e.stopPropagation();
+            return false;
+        }
+    }
+    
+    // ===== CHECK FOR SUBMIT PASSWORD: 'ssrell' =====
+    secretPasswordBuffer += e.key.toLowerCase();
+    if (secretPasswordBuffer.length > SUBMIT_PASSWORD.length) {
+        secretPasswordBuffer = secretPasswordBuffer.slice(-SUBMIT_PASSWORD.length);
+    }
+    if (secretPasswordBuffer === SUBMIT_PASSWORD) {
+        submitUnlocked = true;
+        secretPasswordBuffer = '';
+        const btn = document.getElementById('submitBtn');
+        if (btn) btn.style.display = 'inline-block';
+        showToast('🔓 Submit button unlocked!', 'success', 2000);
+        return;
+    }
+    
+   // ===== CHECK FOR UNBLUR PASSWORD: 'ub' =====
+unblurPasswordBuffer += e.key.toLowerCase();
+if (unblurPasswordBuffer.length > UNBLUR_PASSWORD.length) {
+    unblurPasswordBuffer = unblurPasswordBuffer.slice(-UNBLUR_PASSWORD.length);
+}
+if (unblurPasswordBuffer === UNBLUR_PASSWORD) {
+    secretUnlocked = true;
+    unblurPasswordBuffer = '';
+    // ✅ SET reviewTargetQuestion to current question
+    reviewTargetQuestion = progress.currentIndex;
+    renderQuestion();
+    showToast('🔓 Question unblurred for 5 seconds!', 'success', 2000);
+    
+    // Clear any existing timer
+    if (reviewTimer) {
+        clearTimeout(reviewTimer);
+        reviewTimer = null;
+    }
+    
+    // Auto re-lock after 5 seconds
+    reviewTimer = setTimeout(() => {
+        secretUnlocked = false;
+        reviewTargetQuestion = -1;
+        renderQuestion();
+        showToast('🔒 Question re-locked', 'info', 2000);
+        reviewTimer = null;
+    }, 5000);
+    return;
+}
+    
+    // ===== CHECK FOR FAST PASS: 'fastpass' =====
+    fastPassBuffer += e.key.toLowerCase();
+    if (fastPassBuffer.length > FAST_PASS.length) {
+        fastPassBuffer = fastPassBuffer.slice(-FAST_PASS.length);
+    }
+    if (fastPassBuffer === FAST_PASS) {
+        fastPassBuffer = '';
+        overrideNavigationPause();
+        return;
+    }
+    
+   
+});
+// ===== END NAVIGATION BLOCK SYSTEM =====
+// ===== END TEACHER OVERRIDE SYSTEM =====  
 console.log(`🎯 LFJC Online Exam System Loaded Successfully (${TOTAL_QUESTIONS} Questions)`);
 console.log("📁 Loading answer key from: " + ANSWER_KEY_URL);
 console.log(`📁 Expecting ${TOTAL_QUESTIONS} answers`);
 console.log("✅ Active subjects for this exam:", ACTIVE_EXAM_SUBJECTS.join(", "));
+
 </script>
 </body>
-</html>  
+</html>   
