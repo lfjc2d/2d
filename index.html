@@ -1044,6 +1044,10 @@ button:focus {
     box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     font-size: 16px;
     text-align: center;
+    display: inline-block;
+    width: auto;
+    max-width: 90%;
+    white-space: nowrap;
 }
 
 .toast-success {
@@ -1071,7 +1075,6 @@ button:focus {
     from { opacity: 1; transform: translate(-50%, -50%) scale(1); }
     to { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
 }
-
 @keyframes toastSlideOut {
     from { opacity: 1; transform: translate(-50%, -50%) scale(1); }
     to { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
