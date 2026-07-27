@@ -1035,18 +1035,15 @@ button:focus {
     top: 50% !important;
     left: 50% !important;
     transform: translate(-50%, -50%) !important;
-    padding: 30px 50px;
-    border-radius: 12px;
+    padding: 12px 24px;
+    border-radius: 8px;
     color: white;
     font-weight: bold;
     z-index: 10000;
     animation: toastSlideIn 0.3s ease;
-    box-shadow: 0 5px 20px rgba(0,0,0,0.3);
-    font-size: 24px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    font-size: 16px;
     text-align: center;
-    min-width: 350px;
-    max-width: 80%;
-    pointer-events: none;
 }
 
 .toast-success {
@@ -1054,7 +1051,7 @@ button:focus {
 }
 
 .toast-warning {
-    background: linear-gradient(145deg, #FF6B6B, #DC143C);
+    background: linear-gradient(145deg, #FFA500, #FF8C00);
 }
 
 .toast-error {
@@ -1068,6 +1065,11 @@ button:focus {
 @keyframes toastSlideIn {
     from { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
     to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+@keyframes toastSlideOut {
+    from { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    to { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
 }
 
 @keyframes toastSlideOut {
