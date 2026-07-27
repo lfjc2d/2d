@@ -1031,51 +1031,44 @@ button:focus {
 
 
 .toast {
-    position: fixed;
-    top: 50% !important;
-    left: 50% !important;
-    transform: translate(-50%, -50%) !important;
-    padding: 10px 20px !important;
-    border-radius: 8px;
-    color: white;
-    font-weight: bold;
-    z-index: 10000;
-    animation: toastSlideIn 0.3s ease;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    font-size: 16px;
-    text-align: center;
-    display: inline-block !important;
-    width: auto !important;
-    min-width: auto !important;
-    max-width: 90% !important;
-    white-space: nowrap !important;
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 12px 24px;
+  border-radius: 8px;
+  color: white;
+  font-weight: bold;
+  z-index: 10000;
+  animation: toastSlideIn 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
 
 .toast-success {
-    background: linear-gradient(145deg, #32CD32, #228B22);
+  background: linear-gradient(145deg, #32CD32, #228B22);
 }
 
 .toast-warning {
-    background: linear-gradient(145deg, #FFA500, #FF8C00);
+  background: linear-gradient(145deg, #FFA500, #FF8C00);
 }
 
 .toast-error {
-    background: linear-gradient(145deg, #FF4500, #DC143C);
+  background: linear-gradient(145deg, #FF4500, #DC143C);
 }
 
 .toast-info {
-    background: linear-gradient(145deg, #1E90FF, #4682B4);
+  background: linear-gradient(145deg, #1E90FF, #4682B4);
 }
 
 @keyframes toastSlideIn {
-    from { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
-    to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
 }
 
 @keyframes toastSlideOut {
-    from { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-    to { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+  from { transform: translateX(0); opacity: 1; }
+  to { transform: translateX(100%); opacity: 0; }
 }
+
 
 .tab-switch-warning {
   position: fixed;
@@ -4298,6 +4291,22 @@ function showToast(message, type = 'info', duration = 3000) {
     
     const toast = document.createElement('div');
     toast.className = `toast toast-${type}`;
+    toast.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 15px 25px;
+        border-radius: 8px;
+        color: white;
+        font-weight: bold;
+        z-index: 10000;
+        animation: toastSlideIn 0.3s ease;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        font-size: 16px;
+        min-width: 300px;
+        text-align: center;
+    `;
+    
     toast.textContent = message;
     document.body.appendChild(toast);
     
