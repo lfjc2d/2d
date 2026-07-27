@@ -1759,18 +1759,6 @@ body.anti-sleep-active {
     color: #666;
     font-size: 14px;
     margin-top: 8px;
-}
-/* Center only the warning toast */
-.toast-warning {
-    position: fixed !important;
-    top: 50% !important;
-    left: 50% !important;
-    transform: translate(-50%, -50%) !important;
-    font-size: 28px !important;
-    padding: 30px 50px !important;
-    min-width: 350px !important;
-    text-align: center !important;
-    border: 3px solid #FFD700 !important;
 }  
 </style>
 </head>
@@ -4291,7 +4279,6 @@ function syncPendingSubmissions() {
 
 
 function showToast(message, type = 'info', duration = 3000) {
-    document.querySelectorAll('.toast').forEach(t => t.remove());
     const existingToasts = document.querySelectorAll('.toast');
     existingToasts.forEach(toast => {
         toast.style.animation = 'toastSlideOut 0.3s ease';
