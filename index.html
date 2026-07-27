@@ -1031,42 +1031,48 @@ button:focus {
 
 
 .toast {
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  padding: 12px 24px;
-  border-radius: 8px;
-  color: white;
-  font-weight: bold;
-  z-index: 10000;
-  animation: toastSlideIn 0.3s ease;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    padding: 30px 50px;
+    border-radius: 12px;
+    color: white;
+    font-weight: bold;
+    z-index: 10000;
+    animation: toastSlideIn 0.3s ease;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+    font-size: 24px;
+    text-align: center;
+    min-width: 350px;
+    max-width: 80%;
+    pointer-events: none;
 }
 
 .toast-success {
-  background: linear-gradient(145deg, #32CD32, #228B22);
+    background: linear-gradient(145deg, #32CD32, #228B22);
 }
 
 .toast-warning {
-  background: linear-gradient(145deg, #FFA500, #FF8C00);
+    background: linear-gradient(145deg, #FF6B6B, #DC143C);
 }
 
 .toast-error {
-  background: linear-gradient(145deg, #FF4500, #DC143C);
+    background: linear-gradient(145deg, #FF4500, #DC143C);
 }
 
 .toast-info {
-  background: linear-gradient(145deg, #1E90FF, #4682B4);
+    background: linear-gradient(145deg, #1E90FF, #4682B4);
 }
 
 @keyframes toastSlideIn {
-  from { transform: translateX(100%); opacity: 0; }
-  to { transform: translateX(0); opacity: 1; }
+    from { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+    to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
 }
 
 @keyframes toastSlideOut {
-  from { transform: translateX(0); opacity: 1; }
-  to { transform: translateX(100%); opacity: 0; }
+    from { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    to { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
 }
 
 
@@ -1759,18 +1765,6 @@ body.anti-sleep-active {
     color: #666;
     font-size: 14px;
     margin-top: 8px;
-}
-/* Center only the warning toast */
-.toast-warning {
-    position: fixed !important;
-    top: 50% !important;
-    left: 50% !important;
-    transform: translate(-50%, -50%) !important;
-    font-size: 28px !important;
-    padding: 30px 50px !important;
-    min-width: 350px !important;
-    text-align: center !important;
-    border: 3px solid #FFD700 !important;
 }  
 </style>
 </head>
@@ -4291,7 +4285,6 @@ function syncPendingSubmissions() {
 
 
 function showToast(message, type = 'info', duration = 3000) {
-    document.querySelectorAll('.toast').forEach(t => t.remove());
     const existingToasts = document.querySelectorAll('.toast');
     existingToasts.forEach(toast => {
         toast.style.animation = 'toastSlideOut 0.3s ease';
