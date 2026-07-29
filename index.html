@@ -1902,7 +1902,7 @@ setInterval(function() {
         `;
         loading.innerHTML = `
             <div style="max-width: 500px;">
-                <h1 style="font-size: 4.8em; margin-bottom: 10px; color: #4B0082;">2M</h1>
+                <h1 style="font-size: 4.8em; margin-bottom: 10px; color: #4B0082;">2D</h1>
                 <h1 style="font-size: 2.8em; margin-bottom: 10px; color: #4B0082;">🎓 Welcome to LFJC ONLINE EXAMINATION</h1>
                 <p style="font-size: 1.2em; color: #5a2d82; margin-bottom: 30px;">Please wait while we prepare your exam...</p>
                 
@@ -2020,18 +2020,18 @@ setInterval(function() {
 
 
 <div id="accessDenied" class="access-denied">
-  <h1>2M</h1>
+  <h1>2D</h1>
  <h1>LFJC ONLINE EXAMINATION</h1>
     <p style="font-size: 1.2em; margin: 10px 0;" id="totalQuestionsDisplay">Loading...</p>
     <div id="subjectBreakdownDisplay"></div>
-  <p style="margin: 10px 0; font-weight: bold;" id="correctMarkDisplay">CORRECT ANSWER +1  MARK</p>  
-  <p style="margin: 5px 0; font-weight: bold;" id="wrongMarkDisplay">WRONG ANSWER 0 MARK</p>
+  <p style="margin: 10px 0; font-weight: bold;" id="correctMarkDisplay">CORRECT ANSWER +4  MARKS</p>  
+  <p style="margin: 5px 0; font-weight: bold;" id="wrongMarkDisplay">WRONG ANSWER -1 MARK</p>
     <button id="enterFullScreenBtn" class="verify-btn" style="background: #4B0082; color: white; margin-bottom: 15px; width: 300px;">🖥️ Ready </button>
     <input type="password" id="accessCode" class="access-code-input" placeholder="Enter Access Code">
     <button id="verifyAccess" class="verify-btn">VERIFY ACCESS</button>
     <div id="accessError" class="access-error">❌ Invalid access code. Please try again.</div>
 </div>
-<header>2M-LFJC ONLINE EXAMINATION</header>
+<header>2D-LFJC ONLINE EXAMINATION</header>
 
 <div id="studentEntry" style="display:none;">
   <div class="warning-banner" id="examWarning" style="display:none;">
@@ -2039,7 +2039,7 @@ setInterval(function() {
   </div>
   
   <div class="form-group"><label>NAME</label><input type="text" id="stuName" placeholder="Only letters & spaces" autocomplete="off"></div>
- <div class="form-group"><label>SECTION</label><input type="text" id="stuSection" value="2M" readonly style="background: #f0f0f0; cursor: not-allowed;" autocomplete="off"></div>
+ <div class="form-group"><label>SECTION</label><input type="text" id="stuSection" value="2D" readonly style="background: #f0f0f0; cursor: not-allowed;" autocomplete="off"></div>
   <div class="form-group"><label>ROLL NUMBER</label><input type="text" id="stuRoll" placeholder="Digits only" autocomplete="off"></div>
   <div class="form-group"><label>ADMISSION NUMBER</label><input type="text" id="stuAdm" placeholder="Digits only" autocomplete="off"></div>
 
@@ -2283,14 +2283,14 @@ const WEEK_PRESETS = {
 // ALL SUBJECTS (Define once)
 // =============================================
 const ALL_SUBJECTS = {
-    "MATHS_A":   { questions: 40, numerical: 0 },
-    "MATHS_B":   { questions: 40, numerical: 0 },
-    "MATHS":     { questions: 40, numerical: 0 },
-    "PHYSICS":   { questions: 40, numerical: 0 },
-    "CHEMISTRY": { questions: 40, numerical: 0 },
-    "BOTANY":    { questions: 40, numerical: 0 },
-    "ZOOLOGY":   { questions: 40, numerical: 0 },
-    "BZ":        { questions: 40, numerical: 0 },
+    "MATHS_A":   { questions: 25, numerical: 0 },
+    "MATHS_B":   { questions: 25, numerical: 0 },
+    "MATHS":     { questions: 25, numerical: 0 },
+    "PHYSICS":   { questions: 25, numerical: 0 },
+    "CHEMISTRY": { questions: 25, numerical: 0 },
+    "BOTANY":    { questions: 25, numerical: 0 },
+    "ZOOLOGY":   { questions: 25, numerical: 0 },
+    "BZ":        { questions: 25, numerical: 0 },
 };
 
 // =============================================
@@ -2310,14 +2310,14 @@ function buildExamSetup() {
         }
     });
     if (subjects.length === 0) {
-        subjects.push({ name: "MATHS_B", questions: 40, numerical: 0 });
+        subjects.push({ name: "MATHS_B", questions: 25, numerical: 0 });
     }
     return {
         subjects: subjects,
         duration: 120,
         activeForForms: subjects.map(s => s.name),
-        correctMark: 1,
-        wrongMark: 0
+        correctMark: 4,
+        wrongMark: -1
     };
 }
 
@@ -2379,7 +2379,7 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('subjectBreakdownDisplay').innerHTML = breakdownHTML;
 });
 
-let MARK_PER_CORRECT = 1 , MARK_PER_WRONG = 0;
+let MARK_PER_CORRECT = 4 , MARK_PER_WRONG = -1;
 const STORAGE_KEY_PREFIX = "lfjc_exam_";
 const ACCESS_CODE = "lfjc2025";
 const ADMIN_PASSWORD = "admin2025";
@@ -5268,9 +5268,9 @@ function validateStudentInputs() {
     n.value = n.value.replace(/[^A-Z .]/g, '');
   }
   
-  // SECTION - Always "2M", prevent editing
-  if (s.value !== '2M') {
-    s.value = '2M';
+  // SECTION - Always "2D", prevent editing
+  if (s.value !== '2D') {
+    s.value = '2D';
   }
   
   // ROLL NUMBER VALIDATION: Remove leading zeros and only allow numbers
@@ -5285,7 +5285,7 @@ function validateStudentInputs() {
   }
   
   let v1 = /^[A-Z .]+$/.test(n.value) && n.value !== '', 
-      v2 = s.value === '2M',
+      v2 = s.value === '2D',
       v3 = /^[0-9]+$/.test(r.value) && r.value !== '', 
       v4 = /^[0-9]+$/.test(a.value) && a.value !== '';
   
@@ -5425,9 +5425,9 @@ document.getElementById('stuName').addEventListener('input', function() {
   this.value = this.value.replace(/[^A-Z .]/g, '');
 });
 
-// Additional handler for Section - lock to "2M"
+// Additional handler for Section - lock to "2D"
 document.getElementById('stuSection').addEventListener('input', function() {
-  this.value = '2M';
+  this.value = '2D';
 });
 
 // Additional handler for Roll Number - prevent leading zeros
