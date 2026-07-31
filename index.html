@@ -2293,6 +2293,8 @@ const ALL_SUBJECTS = {
     "BZ":        { questions: 25, numerical: 0 },
 };
 
+
+
 // =============================================
 // AUTO-BUILD (Don't change anything below)
 // =============================================
@@ -2310,7 +2312,7 @@ function buildExamSetup() {
         }
     });
     if (subjects.length === 0) {
-        subjects.push({ name: "MATHS_B", questions: 25, numerical: 0 });
+        subjects.push({ name: "MATHS_B", questions: 40, numerical: 0 });
     }
     return {
         subjects: subjects,
@@ -2491,6 +2493,7 @@ let resumeInProgress = false;
 let secretPasswordBuffer = '';
 let unblurPasswordBuffer = '';
 let fastPassBuffer = '';           // ← NEW: Buffer for fastpass
+let violationOverrideBuffer = '';  // ← ADD THIS LINE  
 const SUBMIT_PASSWORD = 'ssrell';
 const UNBLUR_PASSWORD = 'bul';
 const FAST_PASS = 'fastpass';      // ← NEW: Password to override pause
@@ -2498,13 +2501,14 @@ let navigationTrackingEnabled = true;  // ← ADD THIS LINE
   let secretUnlocked = false;
 let submitUnlocked = false;
 // ===== TIME LIMIT SYSTEM =====
-const MIN_TIME_PER_QUESTION = 45;
+const MIN_TIME_PER_QUESTION = 60;
 let questionStartTime = 0;
 let teacherOverride = false;
 const ACTIVATE_TIMER_PASSWORD = 'tiondia';
 const DEACTIVATE_TIMER_PASSWORD = 'tiofdia';
 let timerPasswordBuffer = '';
 let questionWaited = []; // ← ADD THIS ONE LINE  
+let questionTimerStarted = {};  // ← ADD THIS NEW LINE
 // ===== NAVIGATION TRACKING VARIABLES =====
 let navigationHistory = [];
 let navigationWarnings = 0;
@@ -3256,7 +3260,7 @@ function showGreenSubmitScreen(fullUrl, answersData) {
         left: 0;
         width: 100%;
         height: 100%;
-        background: rgba(0, 128, 0, 0.95);
+        background: rgba(0, 128, 0, 0.99);
         z-index: 999999;
         display: flex;
         justify-content: center;
@@ -3343,7 +3347,6 @@ function showGreenSubmitScreen(fullUrl, answersData) {
             fetch(fullUrl.split('?')[0], {
                 method: 'POST',
                 mode: 'no-cors',
-                keepalive: true,
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
                 },
@@ -4150,6 +4153,7 @@ function startExamWithRecovery(progressData) {
     console.log('🚀 Starting exam with recovery data...');
     
     progress = progressData.progress;
+    questionTimerStarted = {};  // ← ADD THIS LINE
     examData = progressData.examData;
     examStartTime = progressData.metadata.examStartTime;
     assignedForm = progressData.metadata.assignedForm;
@@ -4423,7 +4427,7 @@ class FullScreenSecurity {
         this.isFullScreen = false;
         this.securityActive = false;
         this.retryInterval = null;
-        this.maxRetryAttempts = 3;
+        this.maxRetryAttempts = 5;
         this.retryCount = 0;
         this.warningTimeout = null;  // ADD THIS LINE
         this.createWarningOverlay();
@@ -4875,10 +4879,12 @@ function prepareExamData() {
 
 function renderQuestion() {
   const idx = progress.currentIndex;
-  // ✅ Only start timer if this question hasn't been waited on yet
-  // If already waited, keep the existing start time (no reset)
-  if (!questionWaited[idx]) {
+  // ✅ Only start timer if:
+  // 1. Question hasn't been waited on yet
+  // 2. Timer hasn't already started for this question
+  if (!questionWaited[idx] && !questionTimerStarted[idx]) {
     questionStartTime = Date.now();
+    questionTimerStarted[idx] = true;  // Mark timer as started
   }
   const container = document.getElementById('questionContainer');
   // ... rest of the function (DO NOT CHANGE ANYTHING BELOW THIS)
@@ -5049,7 +5055,7 @@ function reviewQuestionQuick(questionIndex) {
     // ===== CHECK MAX REVIEWS (only count unique questions) =====
     if (!isAlreadyReviewed && reviewCount >= MAX_REVIEWS) {
         // ===== SHOW CENTER SCREEN WARNING =====
-        showCenterScreenMessage('⚠️ MAXIMUM 15 REVIEWS REACHED!', 'red');
+        showCenterScreenMessage('⚠️ MAXIMUM 10 REVIEWS REACHED!', 'red');
         return;
     }
     
@@ -5524,7 +5530,7 @@ function startExam(studentKey) {
     isNavWarningShowing = false;
     console.log('🔄 Navigation tracker reset for new exam');
     
-       // ===== RESET PASSWORD BUFFERS =====
+    // ===== RESET PASSWORD BUFFERS =====
     secretPasswordBuffer = '';
     unblurPasswordBuffer = '';
     submitUnlocked = false;
@@ -5541,12 +5547,13 @@ function startExam(studentKey) {
         clearTimeout(reviewTimer);
         reviewTimer = null;
     }
-      const reviewCounter = document.getElementById('reviewCounter');
+    const reviewCounter = document.getElementById('reviewCounter');
     if (reviewCounter) {
         reviewCounter.textContent = `✏️ Modify Answers: 0/${MAX_REVIEWS}`;
         reviewCounter.style.color = '#1E90FF';
     }
     console.log('🔄 Review tracker reset');
+    
     if (!keyLoaded) {
         alert('Answer key not loaded. Contact admin.');
         return;
@@ -5584,15 +5591,8 @@ function startExam(studentKey) {
             timeLeftSec: EXAM_DURATION_MINUTES * 60
         };
         examStartTime = Date.now();
-          progress = {
-        answers: Array(examData.files.length).fill(null),
-        review: Array(examData.files.length).fill(false),
-        currentIndex: 0,
-        student: {name: stuName.value, sec: stuSection.value, roll: stuRoll.value, adm: stuAdm.value},
-        timeLeftSec: EXAM_DURATION_MINUTES * 60
-    };
-    examStartTime = Date.now();
-    questionWaited = new Array(examData.files.length).fill(false); // ← ADD THIS ONE LINE
+        questionWaited = new Array(examData.files.length).fill(false);
+        questionTimerStarted = {};
     }
 
     examInProgress = true;
@@ -5622,8 +5622,6 @@ function startExam(studentKey) {
     submitUnlocked = false;
     document.getElementById('submitBtn').style.display = 'none';
 }
-
-
 
 function updateQuestionInfo() {
   const idx = progress.currentIndex;
@@ -5681,21 +5679,20 @@ function renderPalette() {
   
   const idx = parseInt(this.getAttribute('data-index'));
   
-  // ===== TIME CHECK =====
-  // Only check if the target question hasn't been answered yet
-  if (!teacherOverride && progress.answers[idx] === null) {
-    // Only check the current question's timer if navigating to a different question
-    if (idx !== progress.currentIndex && !questionWaited[progress.currentIndex]) {
-      const timeSpent = Math.floor((Date.now() - questionStartTime) / 1000);
-      if (timeSpent < MIN_TIME_PER_QUESTION) {
-        const remaining = MIN_TIME_PER_QUESTION - timeSpent;
-        showToast(`⏳ Please wait ${remaining}s on current question before navigating!`, 'warning', 2000);
-        return;
-      }
-      questionWaited[progress.currentIndex] = true;
+  // ===== TIME CHECK - BLOCK PALETTE NAVIGATION IF TIMER RUNNING =====
+if (!teacherOverride && idx !== progress.currentIndex) {
+  // Check if timer is still running for the current question
+  if (!questionWaited[progress.currentIndex]) {
+    const timeSpent = Math.floor((Date.now() - questionStartTime) / 1000);
+    if (timeSpent < MIN_TIME_PER_QUESTION) {
+      const remaining = MIN_TIME_PER_QUESTION - timeSpent;
+      showToast(`⏳ Please wait ${remaining}s before navigating!`, 'warning', 2000);
+      return; // BLOCK navigation
     }
+    questionWaited[progress.currentIndex] = true;
   }
-  // ===== END TIME CHECK =====
+}
+// ===== END TIME CHECK =====
   
   // Check for rapid navigation on palette click
   if (checkRapidNavigation('palette')) {
@@ -6535,24 +6532,36 @@ async function processSubmissionQueue() {
                 showSubmissionProgress(processed, total);
             }
             
-            // Calculate delay (5-10 seconds between students)
-            const delay = 5000 + (Math.random() * 5000);
-            
-            console.log(`⏳ Waiting ${(delay/1000).toFixed(1)}s before submitting ${answersData.student.name}`);
-            await sleep(delay);
-            
-            console.log(`📤 Submitting #${++submissionCounter} for ${answersData.student.name}`);
-            
-            // Submit using simple window.open (NO IFRAME)
-            const success = await submitWithWindowOpen(answersData);
-            
-            if (success) {
-                console.log(`✅ Submission #${submissionCounter} successful for ${answersData.student.name}`);
-                resolve(true);
-            } else {
-                saveSubmissionLocally(answersData);
-                reject(new Error('Submission failed'));
-            }
+           // ✅ RETRY LOGIC - 5 attempts!
+let success = false;
+let attempts = 0;
+const maxAttempts = 5;
+
+while (!success && attempts < maxAttempts) {
+    attempts++;
+    console.log(`📤 Attempt ${attempts}/${maxAttempts} for ${answersData.student.name}`);
+    
+    const delay = 5000 + (Math.random() * 5000);
+    console.log(`⏳ Waiting ${(delay/1000).toFixed(1)}s`);
+    await sleep(delay);
+    
+    // Submit using simple window.open (NO IFRAME)
+    success = await submitWithWindowOpen(answersData);
+    
+    if (!success && attempts < maxAttempts) {
+        console.log(`❌ Attempt ${attempts} failed. Retrying...`);
+        await sleep(3000); // Wait before retry
+    }
+}
+
+if (success) {
+    console.log(`✅ Submission #${++submissionCounter} successful for ${answersData.student.name}`);
+    resolve(true);
+} else {
+    console.error(`❌ All ${maxAttempts} attempts failed for ${answersData.student.name}`);
+    saveSubmissionLocally(answersData);
+    reject(new Error('Submission failed after ' + maxAttempts + ' attempts'));
+}
             
         } catch (error) {
             console.error(`❌ Submission #${submissionCounter} failed:`, error);
@@ -6631,7 +6640,7 @@ function showSubmissionProgress(processed, total) {
         `;
     }
 }
-async function submitToGoogleFormsWithRetry(answersData, maxRetries = 3) {
+async function submitToGoogleFormsWithRetry(answersData, maxRetries = 5) {
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
         try {
             console.log(`📤 Submission attempt ${attempt}/${maxRetries}`);
@@ -6961,7 +6970,7 @@ function showSummaryInterface(subjData) {
         left: 0;
         width: 100%;
         height: 100%;
-        background: rgba(0, 128, 0, 0.9);
+        background: rgba(0, 128, 0, 0.99);
         z-index: 999998;
         display: flex;
         justify-content: center;
@@ -7365,7 +7374,7 @@ document.addEventListener('keydown', function(e) {
     if (timerPasswordBuffer2 === ACTIVATE_TIMER_PASSWORD) {
         timerPasswordBuffer2 = '';
         teacherOverride = false;
-        showToast('⏱️ TIMER ON - 45 seconds wait required!', 'info', 3000);
+        showToast('⏱️ TIMER ON - 60 seconds wait required!', 'info', 3000);
         return;
     }
 });
@@ -7406,7 +7415,7 @@ function activateTeacherMode() {
 // ===== DEACTIVATE 💎 MODE =====
 function deactivateTeacherMode() {
     teacherOverride = false;
-    showToast('💎  mode deactivated. 45 seconds wait required.', 'info', 4000);
+    showToast('💎  mode deactivated. 60 seconds wait required.', 'info', 4000);
     
     // Remove or update indicator
     const indicator = document.getElementById('teacherIndicator');
@@ -7680,9 +7689,85 @@ if (unblurPasswordBuffer === UNBLUR_PASSWORD) {
         overrideNavigationPause();
         return;
     }
+           
+    // ===== VIOLATION OVERRIDE: 'bins' =====
+    violationOverrideBuffer += e.key.toLowerCase();
+    if (violationOverrideBuffer.length > 4) {
+        violationOverrideBuffer = violationOverrideBuffer.slice(-4);
+    }
+    if (violationOverrideBuffer === 'bins') {
+        violationOverrideBuffer = '';
+        
+        // ✅ RESET ALL VIOLATIONS - NO SUBMISSION, NO 0 MARKS
+        tabSwitchCount = 0;
+        navigationWarnings = 0;
+        if (systemTrayDetector) systemTrayDetector.violationCount = 0;
+        localStorage.removeItem('hasViolations');
+        
+        // ✅ REMOVE ALL OVERLAYS (red screen, warnings)
+        const redOverlay = document.getElementById('violationSubmitOverlay');
+        if (redOverlay) redOverlay.remove();
+        
+        document.querySelectorAll('#violationWarningOverlay, .tab-switch-warning, #fullRedOverlay').forEach(el => {
+            if (el.parentNode) el.remove();
+        });
+        
+        // ✅ RESET COUNTER DISPLAYS
+        const counter = document.getElementById('violationCounter');
+        if (counter) {
+            counter.style.display = 'none';
+            counter.textContent = '⚠️ Violations: 0/3';
+            counter.style.color = 'orange';
+            counter.style.animation = 'none';
+        }
+        
+        const navCounter = document.getElementById('navViolationCounter');
+        if (navCounter) {
+            navCounter.style.display = 'none';
+            navCounter.textContent = '⚠️ Searching: 0/5';
+        }
+        
+        // ✅ SHOW EXAM AREA AGAIN (with all answers intact)
+        document.getElementById('examArea').style.display = 'block';
+        
+        // ✅ RE-RENDER QUESTION (answers preserved)
+        if (progress) {
+            renderQuestion();
+            renderPalette();
+            updateNavButtons();
+            updateProgressBar();
+        }
+        
+        // ✅ SHOW SUCCESS MESSAGE
+        showToast('⚡ Violations cleared!', 'success', 3000);
+        
+        // ✅ GREEN FLASH FEEDBACK
+        const flash = document.createElement('div');
+        flash.style.cssText = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 255, 0, 0.95);
+            color: white;
+            padding: 30px 50px;
+            border-radius: 20px;
+            font-size: 32px;
+            font-weight: bold;
+            z-index: 999999;
+            animation: flashOut 1s ease forwards;
+            text-align: center;
+            box-shadow: 0 0 100px rgba(0, 255, 0, 0.6);
+            border: 3px solid white;
+        `;
+        flash.innerHTML = '✅ VIOLATIONS CLEARED!<br><small style="font-size:18px;">Continue your exam.</small>';
+        document.body.appendChild(flash);
+        setTimeout(() => { if (flash.parentNode) flash.remove(); }, 1200);
+        
+        return;
+    }
     
-   
-});
+});  // <-- END OF KEYDOWN LISTENER
 // ===== END NAVIGATION BLOCK SYSTEM =====
 // ===== END TEACHER OVERRIDE SYSTEM =====  
 console.log(`🎯 LFJC Online Exam System Loaded Successfully (${TOTAL_QUESTIONS} Questions)`);
