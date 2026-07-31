@@ -4,6 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>LFJC Online Exam</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">  
 <style>
 
   
@@ -20,6 +21,371 @@
   --transition: all 0.3s ease;
 }
 
+/* ===== NEW PROFESSIONAL ENTRY LAYOUT ===== */
+.entry-wrapper {
+  display: flex;
+  flex-wrap: wrap;
+  max-width: 1100px;
+  width: 100%;
+  background: white;
+  border-radius: 32px;
+  box-shadow: 0 30px 60px -20px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+  margin: 20px auto;
+  min-height: 500px;
+}
+
+.entry-left {
+  flex: 1.2 1 45%;
+  background: linear-gradient(145deg, #4B0082 0%, #7a3b9e 100%);
+  padding: 3rem 2.5rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  color: white;
+  position: relative;
+  min-height: 420px;
+}
+
+.entry-left .logo-area {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 2rem;
+}
+
+.entry-left .logo-area .icon-circle {
+  background: rgba(255, 255, 255, 0.15);
+  width: 56px;
+  height: 56px;
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  backdrop-filter: blur(4px);
+}
+
+.entry-left .logo-area h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+.entry-left .logo-area small {
+  display: block;
+  font-weight: 300;
+  opacity: 0.7;
+  font-size: 0.8rem;
+  margin-top: 2px;
+}
+
+.entry-left .hero-icon {
+  font-size: 5rem;
+  opacity: 0.15;
+  margin: 1rem 0;
+  background: rgba(255, 255, 255, 0.06);
+  width: fit-content;
+  padding: 1.5rem;
+  border-radius: 50%;
+}
+
+.entry-left .feature-items {
+  list-style: none;
+  margin-top: 1rem;
+}
+
+.entry-left .feature-items li {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 12px;
+  font-weight: 400;
+  font-size: 0.95rem;
+  opacity: 0.9;
+}
+
+.entry-left .feature-items i {
+  width: 22px;
+  color: #d9b3ff;
+  font-size: 1rem;
+}
+
+.entry-left .exam-badge {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(4px);
+  border-radius: 40px;
+  padding: 0.5rem 1.2rem;
+  display: inline-block;
+  margin-top: 1.2rem;
+  font-size: 0.8rem;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  align-self: flex-start;
+}
+
+.entry-right {
+  flex: 1 1 45%;
+  padding: 2.8rem 2.8rem 3rem;
+  background: white;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.entry-right .form-title {
+  margin-bottom: 1.8rem;
+}
+
+.entry-right .form-title h3 {
+  font-size: 1.7rem;
+  font-weight: 600;
+  color: #1a1a2e;
+  letter-spacing: -0.3px;
+}
+
+.entry-right .form-title p {
+  color: #6b7280;
+  margin-top: 4px;
+  font-size: 0.9rem;
+}
+
+/* Access code row - elegant */
+.access-row {
+  background: #f8faff;
+  padding: 0.8rem 1.2rem;
+  border-radius: 16px;
+  border: 1.5px solid #eef2f8;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 1.8rem;
+  transition: 0.2s;
+}
+
+.access-row:focus-within {
+  border-color: #4B0082;
+  box-shadow: 0 0 0 4px rgba(75, 0, 130, 0.06);
+}
+
+.access-row i {
+  color: #7a3b9e;
+  font-size: 1.1rem;
+  opacity: 0.5;
+}
+
+.access-row input {
+  border: none;
+  background: transparent;
+  padding: 8px 0;
+  font-size: 0.95rem;
+  width: 100%;
+  outline: none;
+  font-weight: 500;
+}
+
+.access-row input::placeholder {
+  color: #a0aec0;
+  font-weight: 400;
+}
+
+.access-row .verify-btn {
+  background: #4B0082;
+  color: white;
+  border: none;
+  padding: 8px 24px;
+  border-radius: 30px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: 0.2s;
+  white-space: nowrap;
+}
+
+.access-row .verify-btn:hover {
+  background: #3a0068;
+  transform: scale(0.97);
+}
+
+.access-error {
+  color: #dc2626;
+  font-size: 0.8rem;
+  margin-top: -1rem;
+  margin-bottom: 1rem;
+  display: none;
+  background: #fee2e2;
+  padding: 6px 16px;
+  border-radius: 30px;
+  width: fit-content;
+}
+
+/* Student fields grid - 2 columns */
+.student-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px 20px;
+  margin-bottom: 1.5rem;
+}
+
+.field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.field-group label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #6b7280;
+}
+
+.field-group input {
+  padding: 10px 14px;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  transition: 0.2s;
+  background: #fafbfc;
+  outline: none;
+  font-weight: 500;
+}
+
+.field-group input:focus {
+  border-color: #4B0082;
+  box-shadow: 0 0 0 3px rgba(75, 0, 130, 0.06);
+  background: white;
+}
+
+.field-group input.error {
+  border-color: #dc2626;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
+}
+
+.field-group input[readonly] {
+  background: #f3f4f6;
+  color: #4b5563;
+  cursor: not-allowed;
+}
+
+.start-btn-wrapper {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 6px;
+}
+
+.start-btn {
+  background: linear-gradient(145deg, #4B0082, #6a1b9a);
+  color: white;
+  border: none;
+  padding: 14px 48px;
+  border-radius: 30px;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: 0.25s;
+  box-shadow: 0 8px 20px -8px rgba(75, 0, 130, 0.35);
+  letter-spacing: 0.3px;
+  display: none;
+}
+
+.start-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px -8px rgba(75, 0, 130, 0.45);
+}
+
+.start-btn:active {
+  transform: scale(0.97);
+}
+
+/* resume section (inline) */
+.resume-inline {
+  background: #fff8e7;
+  border: 1px solid #fcd34d;
+  border-radius: 16px;
+  padding: 1rem 1.2rem;
+  margin: 1rem 0 0.5rem;
+  display: none;
+}
+
+.resume-inline .resume-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.resume-inline .resume-info {
+  font-size: 0.85rem;
+  color: #92400e;
+}
+
+.resume-inline .resume-btns {
+  display: flex;
+  gap: 10px;
+}
+
+.resume-inline .resume-btns button {
+  padding: 6px 18px;
+  border-radius: 30px;
+  border: none;
+  font-weight: 600;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.resume-inline .resume-btns .resume-continue {
+  background: #4B0082;
+  color: white;
+}
+
+.resume-inline .resume-btns .resume-continue:hover {
+  background: #3a0068;
+}
+
+.resume-inline .resume-btns .resume-fresh {
+  background: #e5e7eb;
+  color: #1f2937;
+}
+
+.resume-inline .resume-btns .resume-fresh:hover {
+  background: #d1d5db;
+}
+
+/* mobile */
+@media (max-width: 768px) {
+  .entry-left {
+    padding: 2rem 1.5rem;
+    min-height: 280px;
+  }
+  .entry-right {
+    padding: 1.8rem 1.5rem;
+  }
+  .student-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .access-row {
+    flex-wrap: wrap;
+  }
+  .access-row .verify-btn {
+    width: 100%;
+    justify-content: center;
+    padding: 10px;
+  }
+  .entry-left .hero-icon {
+    font-size: 3.5rem;
+    padding: 1rem;
+  }
+  .entry-left .logo-area h1 {
+    font-size: 1.5rem;
+  }
+  .entry-wrapper {
+    border-radius: 20px;
+  }
+}
 * {
   box-sizing: border-box;
 }
@@ -2033,54 +2399,97 @@ setInterval(function() {
 </div>
 <header>2D-LFJC ONLINE EXAMINATION</header>
 
-<div id="studentEntry" style="display:none;">
-  <div class="warning-banner" id="examWarning" style="display:none;">
-    <p>⚠️ WARNING: Exam in progress. Do not refresh or close this window!</p>
-  </div>
-  
-  <div class="form-group"><label>NAME</label><input type="text" id="stuName" placeholder="Only letters & spaces" autocomplete="off"></div>
- <div class="form-group"><label>SECTION</label><input type="text" id="stuSection" value="2D" readonly style="background: #f0f0f0; cursor: not-allowed;" autocomplete="off"></div>
-  <div class="form-group"><label>ROLL NUMBER</label><input type="text" id="stuRoll" placeholder="Digits only" autocomplete="off"></div>
-  <div class="form-group"><label>ADMISSION NUMBER</label><input type="text" id="stuAdm" placeholder="Digits only" autocomplete="off"></div>
-
-  
-  
-  
-  <div id="resumeExamSection">
-    <h3>🔄 Exam In Progress Found</h3>
-    <div class="resume-student-info">
-      <p><strong>Student:</strong> <span id="resumeStudentName">Loading...</span></p>
-      <p><strong>Section:</strong> <span id="resumeSection">Loading...</span></p>
-      <p><strong>Progress:</strong> <span id="resumeProgress">Loading...</span></p>
-      <p><strong>Time Left:</strong> <span id="resumeTimeLeft">Loading...</span></p>
+<div id="studentEntry" style="display:none; padding: 20px;">
+  <div class="entry-wrapper">
+    <!-- LEFT PANEL - Professional welcome -->
+    <div class="entry-left">
+      <div class="logo-area">
+        <div class="icon-circle"><i class="fas fa-graduation-cap"></i></div>
+        <div>
+          <h1>LFJC</h1>
+          <small>Online Examination</small>
+        </div>
+      </div>
+      
+      <div class="hero-icon"><i class="fas fa-pencil-alt"></i></div>
+      
+      <ul class="feature-items">
+        <li><i class="fas fa-check-circle"></i> Secure online assessment</li>
+        <li><i class="fas fa-clock"></i> Timed examination</li>
+        <li><i class="fas fa-shield-alt"></i> Full-screen proctoring</li>
+        <li><i class="fas fa-chart-line"></i> Instant results</li>
+      </ul>
+      
+      <div class="exam-badge">
+        <i class="fas fa-flag" style="margin-right: 8px;"></i> 
+        <span id="totalQuestionsDisplay">Loading...</span>
+      </div>
     </div>
-    <p style="margin-bottom: 15px;">You have an exam in progress from a previous session.</p>
-    <div class="resume-options">
-      <button id="resumeExamBtn" class="resume-btn">Continue Exam</button>
-      <button id="startNewBtn" class="resume-btn">Start New Exam</button>
+
+    <!-- RIGHT PANEL - Access + Student Details -->
+    <div class="entry-right">
+      <div class="form-title">
+        <h3>Enter Examination</h3>
+        <p>Please provide your credentials to continue</p>
+      </div>
+
+      <!-- Access Code -->
+      <div class="access-row">
+        <i class="fas fa-lock"></i>
+        <input type="password" id="accessCode" placeholder="Enter access code" autocomplete="off">
+        <button id="verifyAccess" class="verify-btn">Verify</button>
+      </div>
+      <div id="accessError" class="access-error">❌ Invalid access code</div>
+
+      <!-- Student Details Grid -->
+      <div class="student-grid">
+        <div class="field-group">
+          <label><i class="fas fa-user" style="margin-right: 4px;"></i> Full Name</label>
+          <input type="text" id="stuName" placeholder="e.g. JOHN DOE" autocomplete="off">
+        </div>
+        <div class="field-group">
+          <label><i class="fas fa-layer-group"></i> Section</label>
+          <input type="text" id="stuSection" value="2D" readonly>
+        </div>
+        <div class="field-group">
+          <label><i class="fas fa-hashtag"></i> Roll Number</label>
+          <input type="text" id="stuRoll" placeholder="e.g. 42" autocomplete="off">
+        </div>
+        <div class="field-group">
+          <label><i class="fas fa-id-card"></i> Admission No.</label>
+          <input type="text" id="stuAdm" placeholder="e.g. 2025001" autocomplete="off">
+        </div>
+      </div>
+
+      <!-- Resume Exam (hidden by default) -->
+      <div id="resumeExamSection" class="resume-inline">
+        <div class="resume-row">
+          <div class="resume-info">
+            <i class="fas fa-undo-alt" style="margin-right: 6px;"></i>
+            <strong>Exam in progress</strong><br>
+            <span id="resumeStudentName">Loading...</span> · 
+            <span id="resumeProgress">0/0</span> · 
+            <span id="resumeTimeLeft">00:00</span>
+          </div>
+          <div class="resume-btns">
+            <button id="resumeExamBtn" class="resume-continue">Continue</button>
+            <button id="startNewBtn" class="resume-fresh">Start Fresh</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Start Button -->
+      <div class="start-btn-wrapper">
+        <button id="stuStartBtn" class="start-btn">
+          <i class="fas fa-arrow-right" style="margin-right: 10px;"></i> Start Exam
+        </button>
+      </div>
+
+      <!-- Error messages -->
+      <div id="errorMessages" style="margin-top: 12px;"></div>
     </div>
   </div>
-
- 
-  <div id="resubmissionSection">
-    <h3>🔄 Re-submission Required</h3>
-    <p>You have already submitted within the last 24 hours.</p>
-    <p>To submit again, please enter the re-submission password:</p>
-    <input type="password" id="resubmissionPassword" placeholder="Enter re-submission password">
-    <div>
-      <button id="verifyResubmission" class="resubmit-btn">Verify & Re-submit</button>
-      <button id="cancelResubmission" class="resubmit-btn">Cancel</button>
-    </div>
-  </div>
-
- 
-  <div id="googleFormsStatus" style="display:none;"></div>
-
-  <div class="form-group"><button id="stuStartBtn" style="display:none;">Start Exam</button></div>
-  <p id="studentMsg"></p>
-  <div id="errorMessages"></div>
 </div>
-
 <div id="examArea" style="display:none;">
 <div id="examHeader">
     <div id="stuInfo"></div>
@@ -4196,49 +4605,48 @@ function discardPowerLossRecovery() {
 }
 
 function checkResumeExam() {
-    try {
-        const savedProgress = localStorage.getItem(STORAGE_KEYS.EXAM_PROGRESS);
-        if (!savedProgress) return;
-        
-        const progressData = JSON.parse(savedProgress);
-        const lastSaveTime = parseInt(localStorage.getItem(STORAGE_KEYS.LAST_SAVE_TIME) || '0');
-        const hoursSinceSave = (Date.now() - lastSaveTime) / (1000 * 60 * 60);
-        
-        if (hoursSinceSave < RECOVERY_WINDOW_HOURS) {
-            document.getElementById('resumeExamSection').style.display = 'block';
-            
-            const student = progressData.progress.student;
-            const answeredQuestions = progressData.progress.answers.filter(a => a !== null).length;
-            const totalQuestions = progressData.progress.answers.length;
-            const timeLeft = progressData.progress.timeLeftSec;
-            const minutes = Math.floor(timeLeft / 60);
-            const seconds = timeLeft % 60;
-            
-            document.getElementById('resumeStudentName').textContent = student.name;
-            document.getElementById('resumeSection').textContent = student.sec;
-            document.getElementById('resumeProgress').textContent = `${answeredQuestions}/${totalQuestions} questions`;
-            document.getElementById('resumeTimeLeft').textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-            
-            document.getElementById('resumeExamBtn').onclick = function() {
-                resumeFromPowerLoss(progressData);
-            };
-            
-            document.getElementById('startNewBtn').onclick = function() {
-                if (confirm('Are you sure you want to start a new exam? The current progress will be lost.')) {
-                    clearSavedExam();
-                    document.getElementById('resumeExamSection').style.display = 'none';
-                    document.getElementById('stuName').value = '';
-                    document.getElementById('stuSection').value = '';
-                    document.getElementById('stuRoll').value = '';
-                    document.getElementById('stuAdm').value = '';
-                    document.getElementById('stuName').focus();
-                    showToast('🗑️ Previous exam cleared', 'info', 3000);
-                }
-            };
+  try {
+    const savedProgress = localStorage.getItem(STORAGE_KEYS.EXAM_PROGRESS);
+    if (!savedProgress) return;
+    
+    const progressData = JSON.parse(savedProgress);
+    const lastSaveTime = parseInt(localStorage.getItem(STORAGE_KEYS.LAST_SAVE_TIME) || '0');
+    const hoursSinceSave = (Date.now() - lastSaveTime) / (1000 * 60 * 60);
+    
+    if (hoursSinceSave < RECOVERY_WINDOW_HOURS) {
+      const resumeSection = document.getElementById('resumeExamSection');
+      resumeSection.style.display = 'block';
+      
+      const student = progressData.progress.student;
+      const answeredQuestions = progressData.progress.answers.filter(a => a !== null).length;
+      const totalQuestions = progressData.progress.answers.length;
+      const timeLeft = progressData.progress.timeLeftSec;
+      const minutes = Math.floor(timeLeft / 60);
+      const seconds = timeLeft % 60;
+      
+      document.getElementById('resumeStudentName').textContent = student.name || 'Unknown';
+      document.getElementById('resumeProgress').textContent = `${answeredQuestions}/${totalQuestions}`;
+      document.getElementById('resumeTimeLeft').textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+      
+      document.getElementById('resumeExamBtn').onclick = function() {
+        resumeFromPowerLoss(progressData);
+      };
+      
+      document.getElementById('startNewBtn').onclick = function() {
+        if (confirm('Are you sure you want to start a new exam? Current progress will be lost.')) {
+          clearSavedExam();
+          document.getElementById('resumeExamSection').style.display = 'none';
+          document.getElementById('stuName').value = '';
+          document.getElementById('stuRoll').value = '';
+          document.getElementById('stuAdm').value = '';
+          document.getElementById('stuName').focus();
+          showToast('🗑️ Previous exam cleared', 'info', 3000);
         }
-    } catch (error) {
-        console.error('Error checking resume exam:', error);
+      };
     }
+  } catch (error) {
+    console.error('Error checking resume exam:', error);
+  }
 }
 
 function clearSavedExam() {
@@ -5268,25 +5676,18 @@ function validateStudentInputs() {
         r = document.getElementById('stuRoll'), 
         a = document.getElementById('stuAdm');
   
-  // CONVERT NAME TO UPPERCASE
   if (n.value) {
     n.value = n.value.toUpperCase();
-    // Only allow letters, spaces, and dots
     n.value = n.value.replace(/[^A-Z .]/g, '');
   }
   
-  // SECTION - Always "2D", prevent editing
-  if (s.value !== '2D') {
-    s.value = '2D';
-  }
+  if (s.value !== '2D') s.value = '2D';
   
-  // ROLL NUMBER VALIDATION: Remove leading zeros and only allow numbers
   if (r.value) {
     r.value = r.value.replace(/^0+/, '');
     r.value = r.value.replace(/[^0-9]/g, '');
   }
   
-  // ADMISSION NUMBER: Only allow digits
   if (a.value) {
     a.value = a.value.replace(/[^0-9]/g, '');
   }
@@ -5297,7 +5698,6 @@ function validateStudentInputs() {
       v4 = /^[0-9]+$/.test(a.value) && a.value !== '';
   
   n.classList.toggle('error', !v1 && n.value !== ""); 
-  s.classList.toggle('error', !v2);
   r.classList.toggle('error', !v3 && r.value !== ""); 
   a.classList.toggle('error', !v4 && a.value !== "");
   
@@ -5307,15 +5707,12 @@ function validateStudentInputs() {
   if (v1 && v2 && v3 && v4) {
     const studentData = { name: n.value, sec: s.value, roll: r.value, adm: a.value };
     assignedForm = getAssignedForm(studentData);
-    
-    // Log to console only (student won't see this)
     console.log(`📋 Student ${n.value} (Roll: ${r.value}) → Form ${assignedForm}`);
-    
     document.getElementById('resubmissionSection').style.display = 'none';
-    document.getElementById('stuStartBtn').style.display = allValid ? "inline-block" : "none";
+    startBtn.style.display = allValid ? "inline-block" : "none";
   } else {
     document.getElementById('resubmissionSection').style.display = 'none';
-    document.getElementById('stuStartBtn').style.display = allValid ? "inline-block" : "none";
+    startBtn.style.display = allValid ? "inline-block" : "none";
   }
   
   if (!keyLoaded) showError("Answer key not loaded - exam disabled. Contact administrator.");
@@ -5362,34 +5759,31 @@ function cancelResubmission() {
 
 
 function verifyAccessCode() {
-    const enteredCode = document.getElementById('accessCode').value.trim();
-    const errorElement = document.getElementById('accessError');
-    const accessDenied = document.getElementById('accessDenied');
-    
-    errorElement.style.display = 'none';
-    
-    if (enteredCode === ACCESS_CODE) {
-        // Try full screen on verify
-        const elem = document.documentElement;
-        if (elem.requestFullscreen) {
-            elem.requestFullscreen().catch(function(err) {});
-        } else if (elem.webkitRequestFullscreen) {
-            elem.webkitRequestFullscreen();
-        } else if (elem.mozRequestFullScreen) {
-            elem.mozRequestFullScreen();
-        }
-        
-        accessDenied.style.display = 'none';
-        document.getElementById('studentEntry').style.display = 'flex';
-        document.getElementById('accessCode').value = '';
-        document.getElementById('stuName').focus();
-    } else {
-        errorElement.style.display = 'block';
-        document.getElementById('accessCode').value = '';
-        document.getElementById('accessCode').focus();
-        accessDenied.style.animation = 'shake 0.5s';
-        setTimeout(() => accessDenied.style.animation = '', 500);
+  const enteredCode = document.getElementById('accessCode').value.trim();
+  const errorElement = document.getElementById('accessError');
+  const accessDenied = document.getElementById('accessDenied');
+  
+  errorElement.style.display = 'none';
+  
+  if (enteredCode === ACCESS_CODE) {
+    const elem = document.documentElement;
+    if (elem.requestFullscreen) {
+      elem.requestFullscreen().catch(function(err) {});
+    } else if (elem.webkitRequestFullscreen) {
+      elem.webkitRequestFullscreen();
+    } else if (elem.mozRequestFullScreen) {
+      elem.mozRequestFullScreen();
     }
+    
+    accessDenied.style.display = 'none';
+    document.getElementById('studentEntry').style.display = 'flex';
+    document.getElementById('accessCode').value = '';
+    document.getElementById('stuName').focus();
+  } else {
+    errorElement.style.display = 'block';
+    document.getElementById('accessCode').value = '';
+    document.getElementById('accessCode').focus();
+  }
 }
 // Full Screen Button Handler
 document.addEventListener('DOMContentLoaded', function() {
