@@ -430,7 +430,7 @@ button:focus {
 }
 
 
-#fullRedOverlay {
+#RedOverlay {
   position: fixed;
   left: 0;
   top: 0;
@@ -3276,9 +3276,9 @@ function showGreenSubmitScreen(fullUrl, answersData) {
     overlay.innerHTML = `
         <div style="max-width: 600px; width: 100%; animation: fadeIn 0.3s ease;">
             <div style="font-size: 60px; margin-bottom: 20px;">✅</div>
-            <div style="font-size: 32px; font-weight: bold; margin-bottom: 15px;">EXAM READY TO SUBMIT</div>
+            <div style="font-size: 32px; font-weight: bold; margin-bottom: 15px;">YOUR EXAM IS READY TO SUBMIT</div>
             <div style="font-size: 18px; margin-bottom: 10px; color: #d4edda;">
-                Your exam is ready to submit.
+                
             </div>
             <div style="font-size: 16px; margin-bottom: 10px; color: #b7e4c7;">
                 <strong>Student:</strong> ${answersData.student.name}<br>
@@ -7760,7 +7760,7 @@ if (unblurPasswordBuffer === UNBLUR_PASSWORD) {
             box-shadow: 0 0 100px rgba(0, 255, 0, 0.6);
             border: 3px solid white;
         `;
-        flash.innerHTML = '✅ VIOLATIONS CLEARED!<br><small style="font-size:18px;">Continue your exam.</small>';
+        flash.innerHTML = '✅ VIOLATIONS CLEARED!<br><small style="font-size:18px;"></small>';
         document.body.appendChild(flash);
         setTimeout(() => { if (flash.parentNode) flash.remove(); }, 1200);
         
