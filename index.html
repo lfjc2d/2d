@@ -7776,12 +7776,11 @@ console.log(`📁 Expecting ${TOTAL_QUESTIONS} answers`);
 console.log("✅ Active subjects for this exam:", ACTIVE_EXAM_SUBJECTS.join(", "));
 
 </script>
-<!-- ===== TEACHER ACCESS BUTTON (Hidden by default) ===== -->
-<button id="adminAccessBtn" onclick="openTeacherPanel()" style="
-    display: none;
+<!-- ===== TEACHER ACCESS BUTTON ===== -->
+<button onclick="openTeacherPanel()" style="
     position: fixed;
-    bottom: 250px;
-    left: 10px;
+    bottom: 80px;
+    right: 10px;
     background: #8b0002;
     color: white;
     padding: 12px 20px;
@@ -7961,63 +7960,7 @@ console.log("✅ Active subjects for this exam:", ACTIVE_EXAM_SUBJECTS.join(", "
 "></div>
 
 <script>
-// =============================================
-// 🔑 SECRET PASSWORD TO SHOW ADMIN BUTTON
-// =============================================
-const SECRET_PASSWORD = "omssr@2025";  // ← Change this to your secret password
-
-// Simple toast function if showToast is not defined
-if (typeof showToast !== 'function') {
-    function showToast(message, type, duration) {
-        alert(message);
-    }
-}
-
-// ===== SECRET PASSWORD LISTENER =====
-document.addEventListener('keydown', function(e) {
-    // Ignore if typing in input fields
-    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') {
-        return;
-    }
-    
-    // Buffer to store typed keys
-    if (!window._secretBuffer) {
-        window._secretBuffer = '';
-    }
-    
-    // Add the typed character to buffer
-    window._secretBuffer += e.key;
-    
-    // Keep buffer length in check (only store last 20 chars)
-    if (window._secretBuffer.length > 20) {
-        window._secretBuffer = window._secretBuffer.slice(-20);
-    }
-    
-    console.log('Buffer:', window._secretBuffer); // Debug: see what's being typed
-    
-    // Check if the buffer contains the secret password
-    if (window._secretBuffer.includes(SECRET_PASSWORD)) {
-        // Show the admin button
-        const btn = document.getElementById('adminAccessBtn');
-        if (btn) {
-            btn.style.display = 'block';
-            btn.style.animation = 'glowPulse 0.5s ease 3';
-            window._secretBuffer = '';
-            alert('🔓 Admin access unlocked! Click the ADMIN ACCESS button.');
-        }
-    }
-});
-
-// ===== ADD GLOW ANIMATION =====
-const style = document.createElement('style');
-style.textContent = `
-    @keyframes glowPulse {
-        0% { transform: scale(1); box-shadow: 0 0 0 rgba(139, 0, 2, 0.4); }
-        50% { transform: scale(1.1); box-shadow: 0 0 30px rgba(139, 0, 2, 0.8); }
-        100% { transform: scale(1); box-shadow: 0 0 0 rgba(139, 0, 2, 0.4); }
-    }
-`;
-document.head.appendChild(style);
+const TEACHER_PASSWORD = "omssr100609";
 
 // ===== POPULATE DAYS AND YEARS =====
 function populateDateDropdowns() {
@@ -8066,11 +8009,10 @@ function closeTeacherPanel() {
 // ===== VERIFY PASSWORD =====
 function verifyPassword() {
     const entered = document.getElementById('teacherPasswordInput').value;
-    if (entered === SECRET_PASSWORD) {
+    if (entered === TEACHER_PASSWORD) {
         document.getElementById('stepPassword').style.display = 'none';
         document.getElementById('stepDate').style.display = 'block';
         document.getElementById('passwordError').style.display = 'none';
-        document.getElementById('teacherPasswordInput').value = '';
     } else {
         document.getElementById('passwordError').style.display = 'block';
         document.getElementById('teacherPasswordInput').value = '';
@@ -8131,10 +8073,12 @@ function processDownload(filterDate) {
     }
     
     // ===== GET ACTIVE SUBJECTS FROM YOUR EXAM SETUP =====
+    // If EXAM_SETUP is not defined globally, use activeForForms
     let activeSubjects = [];
     if (typeof EXAM_SETUP !== 'undefined' && EXAM_SETUP.activeForForms) {
         activeSubjects = EXAM_SETUP.activeForForms;
     } else {
+        // Fallback: try to get from WEEK_PRESETS
         try {
             const week = EXAM_WEEK || 1;
             activeSubjects = WEEK_PRESETS[week] || ["MATHS_B", "CHEMISTRY"];
@@ -8145,13 +8089,17 @@ function processDownload(filterDate) {
     
     // ===== BUILD CSV HEADER DYNAMICALLY =====
     let csv = 'Timestamp,Name,Section,Roll,Admission';
+    
+    // Add only active subjects to header
     activeSubjects.forEach(subject => {
         csv += `,${subject}`;
     });
+    
     csv += ',Total,Answers\n';
     
     // ===== PROCESS EACH STUDENT =====
     data.forEach(s => {
+        // Format timestamp: DD/MM/YYYY HH:MM:SS
         let timestamp = '';
         if (s.savedAt) {
             try {
@@ -8170,22 +8118,32 @@ function processDownload(filterDate) {
         
         const section = s.student.section || s.student.sec || '';
         
+        // ===== GET MARKS FOR ACTIVE SUBJECTS ONLY =====
         let marks = {};
         let total = 0;
         
+        // Calculate total only from active subjects
         activeSubjects.forEach(subject => {
             let mark = 0;
+            
+            // Check if marks exist in summary
             if (s.summary && s.summary[subject] && s.summary[subject].marks !== undefined) {
                 mark = s.summary[subject].marks;
-            } else if (s[subject] !== undefined) {
+            } 
+            // Check direct properties
+            else if (s[subject] !== undefined) {
                 mark = s[subject];
-            } else if (s[subject.toUpperCase()] !== undefined) {
+            }
+            // Check uppercase versions
+            else if (s[subject.toUpperCase()] !== undefined) {
                 mark = s[subject.toUpperCase()];
             }
+            
             marks[subject] = mark;
             total += mark;
         });
         
+        // Get answers
         let answers = '';
         if (s.answers && Array.isArray(s.answers)) {
             answers = s.answers.map(a => a.studentAnswer || 'N').join(',');
@@ -8195,10 +8153,14 @@ function processDownload(filterDate) {
             answers = '';
         }
         
+        // ===== BUILD ROW =====
         let row = `"${timestamp}","${s.student.name}","${section}",${s.student.roll},${s.student.adm}`;
+        
+        // Add marks for active subjects only
         activeSubjects.forEach(subject => {
             row += `,${marks[subject] || 0}`;
         });
+        
         row += `,${total},"${answers}"`;
         csv += row + '\n';
     });
