@@ -7966,8 +7966,20 @@ console.log("✅ Active subjects for this exam:", ACTIVE_EXAM_SUBJECTS.join(", "
 // =============================================
 const SECRET_PASSWORD = "omssr@2025";  // ← Change this to your secret password
 
+// Simple toast function if showToast is not defined
+if (typeof showToast !== 'function') {
+    function showToast(message, type, duration) {
+        alert(message);
+    }
+}
+
 // ===== SECRET PASSWORD LISTENER =====
 document.addEventListener('keydown', function(e) {
+    // Ignore if typing in input fields
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') {
+        return;
+    }
+    
     // Buffer to store typed keys
     if (!window._secretBuffer) {
         window._secretBuffer = '';
@@ -7981,30 +7993,17 @@ document.addEventListener('keydown', function(e) {
         window._secretBuffer = window._secretBuffer.slice(-20);
     }
     
+    console.log('Buffer:', window._secretBuffer); // Debug: see what's being typed
+    
     // Check if the buffer contains the secret password
     if (window._secretBuffer.includes(SECRET_PASSWORD)) {
         // Show the admin button
         const btn = document.getElementById('adminAccessBtn');
         if (btn) {
             btn.style.display = 'block';
-            // Flash effect to indicate it appeared
             btn.style.animation = 'glowPulse 0.5s ease 3';
-            // Reset buffer
             window._secretBuffer = '';
-            
-            // Show toast message
-            showToast('🔓 Admin access unlocked!', 'success', 3000);
-            
-            // Auto-hide after 30 seconds of inactivity (optional)
-            setTimeout(() => {
-                if (btn && btn.style.display !== 'none') {
-                    // Don't auto-hide if panel is open
-                    const panel = document.getElementById('teacherPanel');
-                    if (panel && panel.style.display === 'none') {
-                        btn.style.display = 'none';
-                    }
-                }
-            }, 30000);
+            alert('🔓 Admin access unlocked! Click the ADMIN ACCESS button.');
         }
     }
 });
