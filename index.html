@@ -2501,7 +2501,7 @@ let navigationTrackingEnabled = true;  // ← ADD THIS LINE
   let secretUnlocked = false;
 let submitUnlocked = false;
 // ===== TIME LIMIT SYSTEM =====
-const MIN_TIME_PER_QUESTION = 60;
+const MIN_TIME_PER_QUESTION = 45;
 let questionStartTime = 0;
 let teacherOverride = false;
 const ACTIVATE_TIMER_PASSWORD = 'tiondia';
@@ -7374,7 +7374,7 @@ document.addEventListener('keydown', function(e) {
     if (timerPasswordBuffer2 === ACTIVATE_TIMER_PASSWORD) {
         timerPasswordBuffer2 = '';
         teacherOverride = false;
-        showToast('⏱️ TIMER ON - 60 seconds wait required!', 'info', 3000);
+        showToast('⏱️ TIMER ON - 45 seconds wait required!', 'info', 3000);
         return;
     }
 });
@@ -7415,7 +7415,7 @@ function activateTeacherMode() {
 // ===== DEACTIVATE 💎 MODE =====
 function deactivateTeacherMode() {
     teacherOverride = false;
-    showToast('💎  mode deactivated. 60 seconds wait required.', 'info', 4000);
+    showToast('💎  mode deactivated. 45 seconds wait required.', 'info', 4000);
     
     // Remove or update indicator
     const indicator = document.getElementById('teacherIndicator');
